@@ -46,8 +46,8 @@ end
 % better select ~5 channels.
 mx = mean(x);
 x = bsxfun(@minus, x, mx);
-x = ButFilter(x,4,high_pass_freq/(LFPfs/2),'high');
-[A, W] = fastica(x(selectedprd,:)');
+hx = ButFilter(x,4,high_pass_freq/(LFPfs/2),'high');
+[A, W] = fastica(hx(selectedprd,:)');
 opf_A = @(x)(bsxfun(@rdivide,x,std(x)));
 [~, EMG_comp] = max(abs(sum(opf_A(A)))); 
 As = A(:,EMG_comp);
