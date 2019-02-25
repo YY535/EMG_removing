@@ -5,6 +5,10 @@ load lfp1.mat %  this is the first continuse period of LFP recording, at
 %% EMG Priod Selection
 tmp_t = 9e6:9.5e6; % example period with high muscle tone
 [x, Ws, As, EMG_au] = EMG_rm(lfp.data, lfp.sr);
+figure;
+plot(tmp_t, lfp.data(tmp_t,6), 'k')
+hold on
+plot(tmp_t, x(tmp_t,6), 'r')
 return
 %% Validation with Ach, given the Ach data.
 % Ach Signals and movement related stuffs
