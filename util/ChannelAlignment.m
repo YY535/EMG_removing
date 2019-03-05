@@ -1,5 +1,5 @@
 function idx = ChannelAlignment(x,varargin)
-% function idx = ChannelAlignment(x,[nsample])
+% function idx = ChannelAlignment(x,[nsample, ifplot])
 % Input: 
 %   x: data nt x nch
 %   nsample: numbers of samples to compute the similarity between channels,
@@ -9,6 +9,7 @@ if nargin>1
 else
     nsample = 5000;
 end
+if nargin>2;ifplot = varargin{1};else; ifplot = false;end
 [nt, nch] = size(x);
 if nt < nch 
     x = x';
@@ -18,6 +19,15 @@ z = linkage(x(randperm(nt, nsample),:)');
 k = figure;
 [~,~,idx] = dendrogram(z);
 close(k)
+if ifplot
+    figure
+    try
+        imagesc(x(1e3:2e3,idx)')
+    catch
+        imagesc(x(:,idx)')
+    end
+end
+warning('Please Refine the Arrangement!')
 end
 
 
