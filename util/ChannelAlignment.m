@@ -17,7 +17,7 @@ if nt < nch
 end
 z = linkage(x(randperm(nt, nsample),:)');
 k = figure;
-[~,~,idx] = dendrogram(z);
+[~,~,idx] = dendrogram(z,nch);
 close(k)
 if ifplot
     figure
