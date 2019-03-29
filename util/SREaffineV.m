@@ -21,7 +21,7 @@ if nx ~= nt
     end
 end
 r = zeros(nch,ny);
-opf_x = @(x)(x'*x/(length(x)-1));
+% opf_x = @(x)(x'*x/(length(x)-1));
 for n = 1:ny 
     tmp_y = y(:,n);
 for k = 1:nch
@@ -32,6 +32,7 @@ for k = 1:nch
         tmp_x = x(:,k);
         tmp_ch = 1;
     end
-    r(k,n) = opf_x(tmp_y - tmp_x*((tmp_x'*tmp_x+1e-10*eye(tmp_ch))\(tmp_x'*tmp_y)));
+    r(k,n) = norm(tmp_y - tmp_x*((tmp_x'*tmp_x+1e-10*eye(tmp_ch))\(tmp_x'*tmp_y)));
+    % norm is optimized 
 end
 end
