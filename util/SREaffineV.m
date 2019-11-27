@@ -1,6 +1,7 @@
 function r = SREaffineV(x,y,varargin)
 % r = SREaffineV(x,y,varargin) 
-% fit linear model to the data.
+% the "non-flateness" of a vector.
+% fit linear model to the data then compute the SRE.
 % error contact chen at biologie.uni-muenchen.de
 
 if nargin > 2
