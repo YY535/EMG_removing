@@ -17,7 +17,7 @@ function EMG_rm_main(FileBase,varargin)
 % 
 % Last Modified: 27.11.2019.
 
-[savedir,denoise_shank, hp_freq,ntrunks, cmp_method,down_sample] = DefaultArgs(varargin, {pwd,1, 100,6, 'hw',3});
+[savedir,denoise_shank, hp_freq,ntrunks, cmp_method,down_sample] = DefaultArgs(varargin, {pwd,1, 100,8, 'hw',3});
 
 if exist([FileBase,'.lfpinterp'],'file')
     LFPfile = [FileBase,'.lfpinterp'];
@@ -58,18 +58,22 @@ end
 save_range = cell(2,1);
 save_range{2} = [par.nChannels, Evts(end)];
 
-%% DETECTING THE HIGH EMG PRIODS 
-swin = 500;
-lwinms = 20;
-
-lfp = LoadBinary(LFPfile,cleanEMGch,par.nChannels,2,[],[],Evts')';% 
-lfp=bsxfun(@minus,lfp,mean(lfp,1));
-
-fprintf('\nDetecting EMG periods...\n')
-
-[EMG_thrd, ~, sug_period] = EMG_Cluster(lfp,hp_freq, Fs, lwinms, ntrunks,...
-swin, true, FileBase);
-clear lfp
+%% DETECTING THE HIGH EMG PRIODS
+if exist([FileBase, '.EMG_Cluster.mat'], 'file')
+    load([FileBase, '.EMG_Cluster.mat'],'EMG_thrd', 'sug_period')
+else
+    swin = 500;
+    lwinms = 20;
+    
+    lfp = LoadBinary(LFPfile,cleanEMGch,par.nChannels,2,[],[],Evts')';%
+    lfp=bsxfun(@minus,lfp,mean(lfp,1));
+    
+    fprintf('\nDetecting EMG periods...\n')
+    
+    [EMG_thrd, ~, sug_period] = EMG_Cluster(lfp,hp_freq, Fs, lwinms, ntrunks,...
+        swin, true, FileBase);
+    clear lfp
+end
 
 %% REMOVING THE ARTIFACTS
 fprintf('\nEMG artifacts removing...\n')
@@ -82,12 +86,11 @@ for n = 1:length(denoise_shank)
     for k = 1:nPeriod
         tmp_Period = sug_period(k,:);
         save_range{1} = [tmp_Period;HP(1) HP(end)];
-        lfp = LoadBinary(LFPfile,HP,par.nChannels,2,[],[],tmp_Period)';%
-        EMG_rm_long(lfp,   Fs, hp_freq, ...
+        EMG_rm_long(LoadBinary(LFPfile,HP,par.nChannels,2,[],[],tmp_Period)',   ...
+            Fs, hp_freq, ...
             EMG_thrd(tmp_Period(1):tmp_Period(2)), true, ...
             armodel, cmp_method, down_sample,...
             true, save_range, FileBase, savedir);
-        clear lfp
     end
 end
 %% COMPLETE OTHER CHANNELS

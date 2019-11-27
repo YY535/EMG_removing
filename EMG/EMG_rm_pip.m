@@ -46,7 +46,7 @@ for k  =1:nSession
     fprintf('\n\nStart denoising %s...\n\n',tmp_session)
     tmp_dir = sprintf('%s/%s', HeadDir,tmp_session);
     cd(tmp_dir)
-    EMG_rm_main(tmp_session,tmp_dir,denoise_shank)
+    EMG_rm_main(tmp_session,tmp_dir,denoise_shank{k})
     fprintf('\n\nFinished denoising %s...\n\n',tmp_session)
     cd(HeadDir)
 end

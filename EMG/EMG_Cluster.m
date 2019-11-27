@@ -116,6 +116,7 @@ for k  =2:(nchunks-1)
         sug_period(k) = fix(sum(se(tmp2,:))/2);
     end
 end
+sug_period = unique(sug_period);
 sug_period = [[1; sug_period(2:(end-1))'+1] [sug_period(2:(end-1))';nt]];
 
 %% SAVE RESULTS
