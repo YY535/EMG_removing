@@ -16,6 +16,17 @@ denoise_shank = 1;
 EMG_rm_pip([],denoise_shank)
 ```
 
+or go to your session and try:
+
+```matlab
+% running for one session
+addpath(genpath('/path/to/EMG_removing'))
+cd('/path/to/the/session')
+FileBase = session_name;
+denoise_shank = 1;
+EMG_rm_main(FileBase,[],denoise_shank)
+```
+
 The cleaned signals will be saved in `.lfpd` files. The EMG signals (`EMG_au`) and the EMG components `AW.As` is saved in `FileBase.EMG_rm.mat`. To check the cleaned signal, use:
 
 ```matlab
