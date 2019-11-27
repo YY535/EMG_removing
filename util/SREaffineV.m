@@ -1,5 +1,7 @@
 function r = SREaffineV(x,y,varargin)
 % r = SREaffineV(x,y,varargin) 
+% fit linear model to the data.
+% error contact chen at biologie.uni-muenchen.de
 
 if nargin > 2
     iscenter = varargin{1};
