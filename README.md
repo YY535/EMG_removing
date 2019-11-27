@@ -3,7 +3,7 @@ Removing high frequency EMG artifacts from the extracellular recording with ICA.
 
 This is generally an overcomplete ICA problem since the number of the potential signal sources is much larger than the recording sites. Lower frequency physiological signal is going to affect the separation.
 
-The current version use the spectrum whitening to enphasize the high frequency EMG tunes (`EMG_rm_main.m`).
+The current version use the spectrum whitening to enphasize the high frequency EMG tones (`EMG_rm_main.m`).
 In an early version we use highpassed (>100 Hz) data to find the EMG component. The related functions (`ÈMG_rm.m`) are still left there.
 
 example:
