@@ -16,4 +16,5 @@ denoise_shank = 1;
 EMG_rm_pip([],denoise_shank)
 ```
 
+The cleaned signals will be saved in .lfpd files.
 This package is entirely based on matlab codes.
