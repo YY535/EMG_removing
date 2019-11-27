@@ -1,5 +1,5 @@
 function EMG_rm_pip(FileBases,denoise_shank)
-% EMG_rm_pip(FileBases)
+% EMG_rm_pip(FileBases,denoise_shank)
 % The pipeline to process all the sessions on the current dictionary. 
 % 
 % Inputs: 
