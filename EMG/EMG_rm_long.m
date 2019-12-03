@@ -1,6 +1,6 @@
 function varargout = EMG_rm_long(x, varargin)
-% function [x, Ws, As, EMG_au, AW] = EMG_rm_long(x,[SamplingRate, high_pass_freq, 
-%                                       EMG_thrd, if_rm_mean, 
+% function [x, Ws, As, EMG_au, AW, armodel] = EMG_rm_long(x,[SamplingRate, 
+%                                       high_pass_freq, EMG_thrd, if_rm_mean, 
 %                                       armodel, cmp_method, down_sample,
 %                                       isave, save_range, FileName, savedir])
 % function to remove the EMG noise in a long period. 
@@ -36,13 +36,16 @@ function varargout = EMG_rm_long(x, varargin)
 %                           current_dictionary_name.lfpc.
 %       savedir:    the directory that one is gonna save the data. the
 %                   default is the current directory.
+%       save_together: if save ICs from all the chunks together. 
+%                       default: true
 %       
-% 
 % Outputs:
 %   x: EMG removed signal.
 %   Ws: unmixing vector of the EMG component.
 %   As: loading of the EMG component.
 %   EMG_au: normalized EMG component in arbitrary unit.
+%   AW: everything about the ICA 
+%   armodel: the armodel used. (use the same armodel for all the chunks)
 %
 %   Note:   function without output arguments saves the EMG component and
 %           the binary lfp data to files. For large data I use memmapfile.
@@ -53,13 +56,13 @@ function varargout = EMG_rm_long(x, varargin)
 %  
 % Error contact: chen at biologie.uni-muenchen.de
 % 
-% Last Modified: 26.11.2019.
+% Last Modified: 01.12.2019.
 
 
 %% COMPLETE VARIABLES
 
 cwd=pwd; %
-[LFPfs, high_pass_freq, EMG_thrd, if_rm_mean,armodel,cmp_method,down_sample,isave,save_range,FileName,savedir] = DefaultArgs(varargin, {1000, 100, [], true,[],'hw',2,false,[],[],[]});
+[LFPfs, high_pass_freq, EMG_thrd, if_rm_mean,armodel,cmp_method,down_sample,isave,save_range,FileName,savedir,save_together] = DefaultArgs(varargin, {1000, 100, [], true,[],'hw',3,false,[],[],[],true});
 [nt, nch] = size(x);
 if nt < nch 
     istr = true;
@@ -183,6 +186,7 @@ if nargout>1
     varargout{3} = As;
     varargout{4} = EMG_au;
     varargout{5} = AW;
+    varargout{6} = armodel;
 else 
     isave = true;
 end
@@ -208,12 +212,16 @@ if isave
             FileName = [FileName,'.new'];
             LFPfile = sprintf('%s%s.lfpd',savedir,FileName);
         end
-        save(sprintf('%s.EMG_rm.t%d-%d.ch%d-%d.mat',FileName,save_range(1,:),save_range(2,:)), 'AW','EMG_au','armodel')
+        if ~save_together
+            save(sprintf('%s.EMG_rm.t%d-%d.ch%d-%d.mat',FileName,save_range(1,:),save_range(2,:)), 'AW','EMG_au','armodel')
+        end
         fileID = fopen(LFPfile,'w');
         fwrite(fileID, int16(x'),'int16');
         fclose(fileID);
     else
-        save(sprintf('%s.EMG_rm.t%d-%d.ch%d-%d.mat',FileName,save_range{1}(1,:),save_range{1}(2,:)), 'AW','EMG_au','armodel')
+        if ~save_together
+            save(sprintf('%s.EMG_rm.t%d-%d.ch%d-%d.mat',FileName,save_range{1}(1,:),save_range{1}(2,:)), 'AW','EMG_au','armodel')
+        end
         LFPfile = sprintf('%s%s.lfpd',savedir,FileName);
         m = memmapfile(LFPfile,'Format',{'int16',save_range{2},'x'},'Writable',true);
         m.Data.x(save_range{1}(2,1):save_range{1}(2,2), save_range{1}(1,1):save_range{1}(1,2)) = int16(x');

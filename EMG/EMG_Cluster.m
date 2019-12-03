@@ -38,7 +38,7 @@ function [EMG_thrd, EMG_heavy, sug_period] = EMG_Cluster(x,varargin)
 % 
 % errors contact: chen at biologie.uni-muenchen.de
 % 
-% last modified: 27.11.2019
+% last modified: 01.12.2019
 
 %% ARGUEMENT COMPELETION
 
@@ -96,7 +96,7 @@ EMG_thrd =(abs(Xtrain*W(2,:)') > prctile(abs(Xtrain(~EMG_heavy,:)*W(2,:)'),99));
 %% RECOMMENDED WORKING PERIOD SECTION
 
 % suggested segmant points: 
-sug_period = ceil(linspace(1,nt,nchunks));% rough section 
+sug_period = ceil(linspace(1,nt,nchunks+1));% rough section 
 
 % the midpoints of low EMG long periods (LEP) closest to the rough segment
 % points.

@@ -9,15 +9,25 @@ function EMG_rm_main(FileBase,varargin)
 %   Optional:
 %       savedir: path to save the cleaned files.
 %       denoise_shank: the shanks for denoising. defualt: shank number 1
+%       cleanEMGch: the channels to detect EMG noise. defualt: 5 sampled in
+%                   the first shank.
+%       Parameters used by the subfunctions: (computational details)
+%           hp_freq: high_pass_freq, defualt: 100 Hz
+%           nchunks: number of chunks, defult: 6 or every chunk less than 15 mins,
+%           cmp_method: methods to compute the EMG components. Whiten('w') or
+%                       Highpass&Whiten('hw', a bit more stable). defualt: 'hw'
+%           down_sample: down sample the data to compute the EMG
+%                       components. default: 3.
+%           save_together: if save all the chunks together. defult: true
 % 
 % Related functions: 
 % EMG_Cluster.m, EMG_rm_long.m, EMG_rm_pip.m
 %
 % Error contact: chen at biologie.uni-muenchen.de
 % 
-% Last Modified: 27.11.2019.
+% Last Modified: 01.12.2019.
 
-[savedir,denoise_shank, hp_freq,ntrunks, cmp_method,down_sample] = DefaultArgs(varargin, {pwd,1, 100,8, 'hw',3});
+[savedir,denoise_shank,cleanEMGch, hp_freq,nchunks, cmp_method,down_sample, save_together] = DefaultArgs(varargin, {pwd,1,[], 100,8, 'hw',3, true});
 
 if exist([FileBase,'.lfpinterp'],'file')
     LFPfile = [FileBase,'.lfpinterp'];
@@ -41,9 +51,16 @@ end
 par=LoadXml(FileBase);
 HP = par.AnatGrps(denoise_shank(1)).Channels +1- par.AnatGrps(1).Channels(1);
 Fs = par.lfpSampleRate;
-cleanEMGch = fix(linspace(3,length(HP)-3,5));% channels to detect high coherence periods.
-[Evts,~] = RecEvents([FileBase,'.cat.evt'],Fs);
-Evts = max(Evts,1);
+if isempty(cleanEMGch)
+    cleanEMGch = fix(linspace(3,length(HP)-3,5));% channels to detect high coherence periods.
+end
+
+% [Evts,~] = RecEvents([FileBase,'.cat.evt'],Fs);
+% Evts = max(Evts,1);
+% Automatically compute the number of samples. 
+mlfp = memmapfile(LFPfile,'Format','int16');
+Evts = [1 length(mlfp.Data)/par.nChannels];
+clear mlfp
 
 %% CREATING .LFPD FILE
 myData = repmat(int16(0),1,par.nChannels*Evts(end));
@@ -65,12 +82,12 @@ else
     swin = 500;
     lwinms = 20;
     
-    lfp = LoadBinary(LFPfile,cleanEMGch,par.nChannels,2,[],[],Evts')';%
+    lfp = LoadBinary(LFPfile,cleanEMGch,par.nChannels,2,[],[],Evts)';%
     lfp=bsxfun(@minus,lfp,mean(lfp,1));
     
     fprintf('\nDetecting EMG periods...\n')
     
-    [EMG_thrd, ~, sug_period] = EMG_Cluster(lfp,hp_freq, Fs, lwinms, ntrunks,...
+    [EMG_thrd, ~, sug_period] = EMG_Cluster(lfp,hp_freq, Fs, lwinms, nchunks,...
         swin, true, FileBase);
     clear lfp
 end
@@ -79,27 +96,39 @@ end
 fprintf('\nEMG artifacts removing...\n')
 
 nPeriod = size(sug_period,1);
+nshank = length(denoise_shank);
 HPs = [];
-for n = 1:length(denoise_shank)
+Ws = cell(nPeriod,nshank);
+As = cell(nPeriod,nshank);
+EMG_au = cell(nPeriod,nshank);
+AW  = cell(nPeriod,nshank);
+
+for n = 1:nshank
     HP = par.AnatGrps(denoise_shank(n)).Channels +1- par.AnatGrps(1).Channels(1);
     HPs = [HPs;HP(:)];
     for k = 1:nPeriod
         tmp_Period = sug_period(k,:);
         save_range{1} = [tmp_Period;HP(1) HP(end)];
-        EMG_rm_long(LoadBinary(LFPfile,HP,par.nChannels,2,[],[],tmp_Period)',   ...
+        [~, Ws{k,n}, As{k,n}, EMG_au{k,n}, AW{k,n}, armodel] = EMG_rm_long(LoadBinary(LFPfile,HP,par.nChannels,2,[],[],tmp_Period)',   ...
             Fs, hp_freq, ...
             EMG_thrd(tmp_Period(1):tmp_Period(2)), true, ...
             armodel, cmp_method, down_sample,...
-            true, save_range, FileBase, savedir);
+            true, save_range, FileBase, savedir, save_together);
     end
 end
+
+if save_together
+    shank_names = sprintf('%d-',denoise_shank);
+    save(sprintf('%s/%s.EMG_rm.sh%s.mat',savedir,FileBase,shank_names(1:(end-1))), 'Ws','As','AW','EMG_au','armodel')
+end
+
 %% COMPLETE OTHER CHANNELS
 other_channels = setdiff(1:par.nChannels,HPs);
 nothrch = length(other_channels);
 m = memmapfile(FileName,'Format',{'int16',save_range{2},'x'},'Writable',true);
 mlfp = memmapfile(LFPfile,'Format',{'int16',save_range{2},'x'});
 for k = 1:nothrch
-m.Data.x(other_channels(k),:) = mlfp.Data.x(other_channels(k),:);
+    m.Data.x(other_channels(k),:) = mlfp.Data.x(other_channels(k),:);
 end
 clear m mflp
 fprintf('\nDone\n')
