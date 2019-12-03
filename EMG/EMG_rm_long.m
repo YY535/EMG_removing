@@ -22,6 +22,7 @@ function varargout = EMG_rm_long(x, varargin)
 %                   Highpass&Whiten('hw', a bit more stable). defualt: 'hw'
 %       down_sample:down sample the data to compute the periods.
 %                   default:3.
+%       numOfIC: adjusted according to number of channels.
 %       isave: if save to a file. defualt: false (when the entry is empty)
 %              if the entry is not empty, the file is saved to a file
 %              given by "Filename".
@@ -62,7 +63,7 @@ function varargout = EMG_rm_long(x, varargin)
 %% COMPLETE VARIABLES
 
 cwd=pwd; %
-[LFPfs, high_pass_freq, EMG_thrd, if_rm_mean,armodel,cmp_method,down_sample,isave,save_range,FileName,savedir,save_together] = DefaultArgs(varargin, {1000, 100, [], true,[],'hw',3,false,[],[],[],true});
+[LFPfs, high_pass_freq, EMG_thrd, if_rm_mean,armodel,cmp_method,down_sample,numOfIC,isave,save_range,FileName,savedir,save_together] = DefaultArgs(varargin, {1000, 100, [], true,[],'hw',3,0,false,[],[],[],true});
 [nt, nch] = size(x);
 if nt < nch 
     istr = true;
@@ -73,6 +74,9 @@ else
 end
 if isempty(EMG_thrd)
     error('Please Check the high EMG detection file.')
+end
+if ~numOfIC
+    numOfIC = max(fix(.7*nch), min(10,nch));
 end
 if ~isempty(savedir)
     savedir = [savedir,'/'];
@@ -119,7 +123,7 @@ opf_A = @(x)(bsxfun(@rdivide,x,SREaffineV(chmap,x)));
 switch lower(cmp_method) % 
     case 'hw'
         hx = ButFilter(x,4,high_pass_freq/(LFPfs/2),'high');
-        [Ah, Wh] = fastica(hx(selectedprd,:)', 'numOfIC', 50);
+        [Ah, Wh] = fastica(hx(selectedprd,:)', 'numOfIC', numOfIC);
         % [~, EMG_comp] = max(abs(sum(opf_A(Ah))));
         [~,rod] = sort(abs(sum(opf_A(Ah))),'descend');
         % EMG_au(:,1) = (x*Wh(EMG_comp,:)');
@@ -132,7 +136,7 @@ switch lower(cmp_method) %
         AW.Wh = Wh;
         AW.Wx = Wx;
     case 'w' % Use Whiten alone
-        [A, W] = fastica(wx(1:down_sample:end,:)', 'numOfIC', 50);% selectedprd
+        [A, W] = fastica(wx(1:down_sample:end,:)', 'numOfIC', numOfIC);% selectedprd
     otherwise
         fprintf('Please using hw or w. ')
 end

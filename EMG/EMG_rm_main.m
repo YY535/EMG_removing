@@ -27,7 +27,7 @@ function EMG_rm_main(FileBase,varargin)
 % 
 % Last Modified: 01.12.2019.
 
-[savedir,denoise_shank,cleanEMGch, hp_freq,nchunks, cmp_method,down_sample, save_together] = DefaultArgs(varargin, {pwd,1,[], 100,8, 'hw',3, true});
+[savedir,denoise_shank,cleanEMGch, hp_freq,nchunks, cmp_method,down_sample, save_together,numOfIC] = DefaultArgs(varargin, {pwd,1,[], 100,8, 'hw',3, true,0});
 
 if exist([FileBase,'.lfpinterp'],'file')
     LFPfile = [FileBase,'.lfpinterp'];
@@ -112,14 +112,14 @@ for n = 1:nshank
         [~, Ws{k,n}, As{k,n}, EMG_au{k,n}, AW{k,n}, armodel] = EMG_rm_long(LoadBinary(LFPfile,HP,par.nChannels,2,[],[],tmp_Period)',   ...
             Fs, hp_freq, ...
             EMG_thrd(tmp_Period(1):tmp_Period(2)), true, ...
-            armodel, cmp_method, down_sample,...
+            armodel, cmp_method, down_sample,numOfIC,...
             true, save_range, FileBase, savedir, save_together);
     end
 end
 
 if save_together
     shank_names = sprintf('%d-',denoise_shank);
-    save(sprintf('%s/%s.EMG_rm.sh%s.mat',savedir,FileBase,shank_names(1:(end-1))), 'Ws','As','AW','EMG_au','armodel','sug_period')
+    save(sprintf('%s/%s.EMG_rm.sh%s.mat',savedir,FileBase,shank_names(1:(end-1))), 'Ws','As','AW','EMG_au','armodel','sug_period','par','denoise_shank','LFPfile')
 end
 
 %% COMPLETE OTHER CHANNELS
