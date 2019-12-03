@@ -54,11 +54,21 @@ Fs = par.lfpSampleRate;
 if isempty(WinLen)
     WinLen = Fs;
 end
-[Evts,~] = RecEvents([FileBase,'.cat.evt'],Fs);
-Evts = max(Evts,1);
-Data_Range = [par.nChannels, Evts(end)];
+mlfp = memmapfile(LFPfile,'Format','int16');
+Data_Range = [par.nChannels, length(mlfp.Data)/par.nChannels];
+
 if isempty(Period)
-    Period = load([FileBase '.sts.RUN']);
+    if exist([FileBase,'.sts.RUN'],'file')
+        Period = load([FileBase,'.sts.RUN']);
+    else
+        a = dir('*.sts.*');
+        if length(a)>0
+            Period = load(a(1).name);
+            fprintf('\nViewing the %s period...\n', a(1).name((find(a(1).name=='.',1,'last')+1):end))
+        else
+            Period = [1 12500];
+        end
+    end
 end
 % Smaller Chunks. 
 nPeriod = size(Period,1);
