@@ -1,5 +1,7 @@
 function EMG_rm_main(FileBase,varargin)
-% EMG_rm_main(FileBases,[savedir,denoise_shank])
+% EMG_rm_main(FileBases,[savedir,denoise_shank,cleanEMGch,numOfIC,...
+%                        hp_freq,nchunks, cmp_method,down_sample, ...
+%                        save_together])
 %
 % The main function to perform denoising. 
 % This function is working under the session directory
@@ -12,6 +14,7 @@ function EMG_rm_main(FileBase,varargin)
 %       cleanEMGch: the channels to detect EMG noise. defualt: 5 sampled in
 %                   the first shank.
 %       Parameters used by the subfunctions: (computational details)
+%           numOfIC: number of ICs.
 %           hp_freq: high_pass_freq, defualt: 100 Hz
 %           nchunks: number of chunks, defult: 6 or every chunk less than 15 mins,
 %           cmp_method: methods to compute the EMG components. Whiten('w') or
@@ -27,7 +30,7 @@ function EMG_rm_main(FileBase,varargin)
 % 
 % Last Modified: 01.12.2019.
 
-[savedir,denoise_shank,cleanEMGch, hp_freq,nchunks, cmp_method,down_sample, save_together,numOfIC] = DefaultArgs(varargin, {pwd,1,[], 100,8, 'hw',3, true,0});
+[savedir,denoise_shank,cleanEMGch,numOfIC, hp_freq,nchunks, cmp_method,down_sample, save_together] = DefaultArgs(varargin, {pwd,1,[],50, 100,8, 'hw',3, true});
 
 if exist([FileBase,'.lfpinterp'],'file')
     LFPfile = [FileBase,'.lfpinterp'];
@@ -132,3 +135,9 @@ for k = 1:nothrch
 end
 clear m mflp
 fprintf('\nDone\n')
+%% CHECK RESULTS:
+% PYR_Channel = 37;
+% EMG_rm_report([],PYR_Channel);
+% EMG_rm_viewspec(PYR_Channel,[])
+
+% EOF
