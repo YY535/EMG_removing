@@ -1,22 +1,33 @@
-function EMG_rm_viewspec(Channel,Periods)
-% EMG_rm_viewspec(Channel,Periods)
+function EMG_rm_viewspec(varargin)
+% EMG_rm_viewspec(Channel,Periods,savedir,isnorm)
 % 
 % view the effect of EMG removal in specragram.
 % Inputs: 
-%   Channel: the channels to compare. 
+%   Channel: the channels to compare. If not given, will select the one
+%            with the largest ripple band power.
 %   Periods: the periods to check.
+%   savedir: the path to save the figures.
+%   isnorm: whether to plot the normalized spectrum for lfp and dlfp. 
+%           defualt: true
 % 
 % Error contact: chen at biologie.uni-muenchen.de
 % 
 % Last Modified: 01.12.2019.
 
 %%
+[Channel,Periods,savedir,isnorm,nFFT,savespec] = DefaultArgs(varargin, {[],[],pwd,true,[],true});
+
 a = dir('*.EMG_rm.sh*.mat');
 FileName = a(1).name;
 load(FileName)
 FileBase = FileName(1:(find(FileName=='.',1,'first')-1));
 a = dir('*.EMG_Cluster.mat');
 load(a(1).name)
+if isnorm 
+    NORM = ' normalized';
+else
+    NORM = [];
+end
 if isempty(Periods)
     a = dir('*.sts.*');
     nP = length(a);
@@ -35,56 +46,162 @@ else
     nP = length(Periods);
 end
 
-%% DATA PROCESSING
 mlfp = memmapfile(LFPfile,'Format','int16');
 data_range = [par.nChannels, length(mlfp.Data)/par.nChannels];
-mlfp = memmapfile(LFPfile,'Format',{'int16',data_range,'x'});
-lfp = double(mlfp.Data.x(Channel,:))';
-lfp = bsxfun(@minus,lfp,mean(lfp));%zscore(lfp);
-mlfp = memmapfile([FileBase, '.lfpd'],'Format',{'int16',data_range,'x'});
-dlfp = double(mlfp.Data.x(Channel,:))';
-dlfp = bsxfun(@minus,dlfp,mean(dlfp));%zscore(dlfp);
-EMG = lfp-dlfp;
-if isfield(armodel,'ARmodel')
-    lfp=WhitenSignal(lfp,[],[],armodel.ARmodel);
-    dlfp=WhitenSignal(dlfp,[],[],armodel.ARmodel);
-    EMG=WhitenSignal(EMG,[],[],armodel.ARmodel);
-else
-    lfp=WhitenSignal(lfp,[],[],armodel);
-    dlfp=WhitenSignal(dlfp,[],[],armodel);
-    EMG=WhitenSignal(EMG,[],[],armodel);
-end
-[y2, f, t, phi, ~,~] = mtcsdlong_E([EMG,lfp,dlfp],[],par.lfpSampleRate);
-%% AVAERAGE CROSS-SPECTRAL DENSITY CROSS STATES
-nt = length(t);
-tt = 1:500;
-nclm = 4;
-nrows = ceil(nP/nclm)+3;
-figure
-for k = 1:nP
-    subplot(nrows,nclm,k)
-    tmp_t = false(nt,1);
-    tmp_Period = Periods{k}/par.lfpSampleRate;
-    for n = 1:size(tmp_Period,1)
-        tmp_t(t<tmp_Period(n,2) & t>=tmp_Period(n,1)) = true;
+clear mlfp
+%% DATA PROCESSING
+for ksh = 1:length(denoise_shank)
+    tmp_shank = denoise_shank(ksh);
+    HP = par.AnatGrps(tmp_shank).Channels-par.AnatGrps(1).Channels(1)+1;
+    nch = length(HP);
+    if exist(sprintf('%s/%s.sh.%d.EMG_Spec.mat',savedir,FileBase,tmp_shank),'file')
+        load(sprintf('%s/%s.sh.%d.EMG_Spec.mat',savedir,FileBase,tmp_shank), 'y2','f','t')
+    else
+        y2 = cell(nch,1);
+        for n = 1:nch
+            fprintf('\rShank:%d, Channel: %d, ...', ksh,n)
+            mlfp = memmapfile(LFPfile,'Format',{'int16',data_range,'x'});
+            lfp = double(mlfp.Data.x(HP(n),:))';
+            lfp = bsxfun(@minus,lfp,mean(lfp));%zscore(lfp);
+            mlfp = memmapfile([FileBase, '.lfpd'],'Format',{'int16',data_range,'x'});
+            dlfp = double(mlfp.Data.x(HP(n),:))';
+            dlfp = bsxfun(@minus,dlfp,mean(dlfp));%zscore(dlfp);
+            EMG = lfp-dlfp;
+            if isfield(armodel,'ARmodel')
+                lfp=WhitenSignal(lfp,[],[],armodel.ARmodel);
+                dlfp=WhitenSignal(dlfp,[],[],armodel.ARmodel);
+                EMG=WhitenSignal(EMG,[],[],armodel.ARmodel);
+            else
+                lfp=WhitenSignal(lfp,[],[],armodel);
+                dlfp=WhitenSignal(dlfp,[],[],armodel);
+                EMG=WhitenSignal(EMG,[],[],armodel);
+            end
+            [tmp_y2, f, t, ~, ~,~] = mtcsdlong_E([EMG,lfp,dlfp],nFFT,par.lfpSampleRate);
+            y2{n}=tmp_y2(:,f<400,[1 5 9 7]);
+            clear tmp_y2
+        end
+        nt = length(t);
+        f = f(f<400);
+        clear mlfp lfp dlfp
+        if savespec
+            save(sprintf('%s/%s.sh.%d.EMG_Spec.mat',savedir,FileBase,tmp_shank),'y2','f','t','-v7.3')
+        end
     end
-    plot(f, sq(mean(y2(tmp_t,:,[1 5 9 4 7]),1)))
-    title(P_title{k})
+    if isempty(Channel)
+        tmp = zeros(nch,1);
+        for k  =1:nch
+            tmp(k) = mean(mean(y2{n}(:,f>100 & f<300,2)));
+        end
+        [~,ch] = max(tmp);
+        fprintf('\nSelect channel %d.\n',HP(ch))
+    elseif length(Channel)>1
+        ch = Channel(ksh);
+    else
+        ch = Channel;
+    end
+    %% AVAERAGE CROSS-SPECTRAL DENSITY CROSS STATES
+    nclm = 4;
+    nrows = nP+3;% ceil(nP/nclm)
+    nf = length(f);
+    EMGs = zeros(nf,nP);
+    EMGch = zeros(nf,nP);
+    kf = figure;
+    if isnorm
+        opf_p = @(x)bsxfun(@rdivide,x,sqrt(sum(x.^2)));
+    else
+        opf_p = @(x)(x);
+    end
+    % For depth profile:
+    for k = 1:nP
+        tmp_t = false(nt,1);
+        tmp_Period = Periods{k}/par.lfpSampleRate;
+        for n = 1:size(tmp_Period,1)
+            tmp_t(t<tmp_Period(n,2) & t>=tmp_Period(n,1)) = true;
+        end
+        % RAW DATA
+        subplot(nrows,nclm,(k-1)*nclm +1)
+        tmp = zeros(nf,nch);
+        for n = 1:nch
+            tmp(:,n) = mean(abs(y2{n}(tmp_t,:,2)),1);
+        end
+        c = pcolor(f, HP, opf_p(tmp)');
+        c.EdgeColor='none';
+        ylabel(P_title{k})
+        
+        % CLEAN DATA
+        subplot(nrows,nclm,(k-1)*nclm +2)
+        tmp = zeros(nf,nch);
+        for n = 1:nch
+            tmp(:,n) = mean(abs(y2{n}(tmp_t,:,3)),1);
+        end
+        c = pcolor(f, HP, opf_p(tmp)');
+        c.EdgeColor='none';
+        
+        % EMG-CLEAN CSD
+        subplot(nrows,nclm,(k-1)*nclm +3)
+        tmp = zeros(nf,nch);
+        for n = 1:nch
+            tmp(:,n) = mean(abs(y2{n}(tmp_t,:,4)),1);
+        end
+        c = pcolor(f, HP, tmp');
+        c.EdgeColor='none';
+        
+        EMGs(:,k) = mean(abs(y2{ch}(tmp_t,:,1)),1);
+        EMGch(:,k) = mean(abs(y2{ch}(tmp_t,:,4)),1);
+        
+    end
+    subplot(nrows,nclm,1)
+    title(['lfp', NORM])
+    subplot(nrows,nclm,2)
+    title(['dlfp', NORM])
+    subplot(nrows,nclm,2)
+    title('EMG-dlfp')
+    l(1) = subplot(nrows,nclm,(nP-1)*nclm);
+    plot(f,EMGch)
+    title('EMG-pyr CSD')
+    xlabel('frequency (Hz)')
+    
+    l(2) = subplot(nrows,nclm,nP*nclm);
+    plot(f,EMGs)
+    legend(P_title)
+    title('EMG Power')
+    xlabel('frequency (Hz)')
+    
+    linkaxes(l,'xy')
+    
+% For single channel
+%     for k = 1:nP
+%         subplot(nrows,nclm,k)
+%         tmp_t = false(nt,1);
+%         tmp_Period = Periods{k}/par.lfpSampleRate;
+%         for n = 1:size(tmp_Period,1)
+%             tmp_t(t<tmp_Period(n,2) & t>=tmp_Period(n,1)) = true;
+%         end
+%         plot(f, sq(mean(y2(tmp_t,:,[1 5 9 4 7]),1)))
+%         title(P_title{k})
+%     end
+%     legend('EMG','lfp','dlfp','EMG-lfp','EMG-dlfp')
+    %% THE SPECTROGRAM
+    nt = length(t);
+    tt = 1:500;
+    subplot(nrows,1,nrows-2)
+    c = pcolor(t(tt),f(f<500),sq(y2{ch}(tt,f<500,1,1))');
+    c.EdgeColor='none';
+    ylabel('EMG')
+    colorbar
+    
+    subplot(nrows,1,nrows-1)
+    c = pcolor(t(tt),f,sq(y2{ch}(tt,:,2))');
+    c.EdgeColor='none';
+    ylabel('lfp')
+    colorbar
+    
+    subplot(nrows,1,nrows)
+    c = pcolor(t(tt),f,sq(y2{ch}(tt,:,3))');
+    c.EdgeColor='none';
+    ylabel('dlfp')
+    xlabel('time(s)')
+    colorbar
+    
+    savefig(kf,sprintf('%s/%s.sh.%d.EMG_viewspec.fig',savedir,FileBase,tmp_shank))
 end
-legend('EMG','lfp','dlfp','EMG-lfp','EMG-dlfp')
-%% THE SPECTROGRAM
-subplot(nrows,1,nrows-2)
-c = pcolor(t(tt),f(f<500),sq(y2(tt,f<500,1,1))');
-c.EdgeColor='none';
-ylabel('EMG')
-subplot(nrows,1,nrows-1)
-c = pcolor(t(tt),f,sq(y2(tt,:,2,2))');
-c.EdgeColor='none';
-ylabel('lfp')
-subplot(nrows,1,nrows)
-c = pcolor(t(tt),f,sq(y2(tt,:,3,3))');
-c.EdgeColor='none';
-ylabel('dlfp')
-xlabel('time(s)')
-
-

@@ -123,12 +123,12 @@ opf_A = @(x)(bsxfun(@rdivide,x,SREaffineV(chmap,x)));
 switch lower(cmp_method) % 
     case 'hw'
         hx = ButFilter(x,4,high_pass_freq/(LFPfs/2),'high');
-        [Ah, Wh] = fastica(hx(selectedprd,:)', 'numOfIC', numOfIC);
+        [Ah, Wh] = fastica(hx(selectedprd,:)', 'numOfIC', numOfIC,'verbose','off');
         % [~, EMG_comp] = max(abs(sum(opf_A(Ah))));
         [~,rod] = sort(abs(sum(opf_A(Ah))),'descend');
         % EMG_au(:,1) = (x*Wh(EMG_comp,:)');
         % Components from all over
-        [Ax, Wx] = fastica(Wh(rod,:)*wx(1:down_sample:end,:)');
+        [Ax, Wx] = fastica(Wh(rod,:)*wx(1:down_sample:end,:)','verbose','off');
         A = Ah(:,rod)*Ax;
         W = Wx*Wh(rod,:);
         AW.Ah = Ah;
@@ -136,7 +136,7 @@ switch lower(cmp_method) %
         AW.Wh = Wh;
         AW.Wx = Wx;
     case 'w' % Use Whiten alone
-        [A, W] = fastica(wx(1:down_sample:end,:)', 'numOfIC', numOfIC);% selectedprd
+        [A, W] = fastica(wx(1:down_sample:end,:)', 'numOfIC', numOfIC,'verbose','off');% selectedprd
     otherwise
         fprintf('Please using hw or w. ')
 end
