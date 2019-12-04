@@ -1,5 +1,5 @@
 function EMG_rm_viewspec(varargin)
-% EMG_rm_viewspec(Channel,Periods,savedir,isnorm)
+% EMG_rm_viewspec(Channel,Periods,savedir,isnorm,nFFT,savespec)
 % 
 % view the effect of EMG removal in specragram.
 % Inputs: 
@@ -9,6 +9,8 @@ function EMG_rm_viewspec(varargin)
 %   savedir: the path to save the figures.
 %   isnorm: whether to plot the normalized spectrum for lfp and dlfp. 
 %           defualt: true
+%   nFFT: nfft to compute spectrum
+%   savespec: if one wants to save the computed spectrum
 % 
 % Error contact: chen at biologie.uni-muenchen.de
 % 
