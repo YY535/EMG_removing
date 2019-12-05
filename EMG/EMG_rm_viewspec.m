@@ -82,17 +82,17 @@ for ksh = 1:length(denoise_shank)
             y2{n}=tmp_y2(:,f<400,[1 5 9 7]);
             clear tmp_y2
         end
-        nt = length(t);
         f = f(f<400);
         clear mlfp lfp dlfp
         if savespec
             save(sprintf('%s/%s.sh.%d.EMG_Spec.mat',savedir,FileBase,tmp_shank),'y2','f','t','-v7.3')
         end
     end
+    nt = length(t);
     if isempty(Channel)
         tmp = zeros(nch,1);
         for k  =1:nch
-            tmp(k) = mean(mean(y2{n}(:,f>100 & f<300,2)));
+            tmp(k) = mean(mean(y2{k}(:,f>100 & f<300,2)));
         end
         [~,ch] = max(tmp);
         fprintf('\nSelect channel %d.\n',HP(ch))
@@ -129,6 +129,7 @@ for ksh = 1:length(denoise_shank)
         c = pcolor(f, HP, opf_p(tmp)');
         c.EdgeColor='none';
         ylabel(P_title{k})
+        colorbar
         
         % CLEAN DATA
         subplot(nrows,nclm,(k-1)*nclm +2)
@@ -137,7 +138,8 @@ for ksh = 1:length(denoise_shank)
             tmp(:,n) = mean(abs(y2{n}(tmp_t,:,3)),1);
         end
         c = pcolor(f, HP, opf_p(tmp)');
-        c.EdgeColor='none';
+        c.EdgeColor='none';   
+        colorbar
         
         % EMG-CLEAN CSD
         subplot(nrows,nclm,(k-1)*nclm +3)
@@ -147,29 +149,33 @@ for ksh = 1:length(denoise_shank)
         end
         c = pcolor(f, HP, tmp');
         c.EdgeColor='none';
+        colorbar
         
         EMGs(:,k) = mean(abs(y2{ch}(tmp_t,:,1)),1);
         EMGch(:,k) = mean(abs(y2{ch}(tmp_t,:,4)),1);
         
     end
+    
     subplot(nrows,nclm,1)
     title(['lfp', NORM])
     subplot(nrows,nclm,2)
     title(['dlfp', NORM])
-    subplot(nrows,nclm,2)
+    subplot(nrows,nclm,3)
     title('EMG-dlfp')
-    l(1) = subplot(nrows,nclm,(nP-1)*nclm);
+    
+    l(1) = subplot(nrows,nclm,nclm);
     plot(f,EMGch)
     title('EMG-pyr CSD')
     xlabel('frequency (Hz)')
     
-    l(2) = subplot(nrows,nclm,nP*nclm);
+    l(2) = subplot(nrows,nclm,2*nclm);
     plot(f,EMGs)
     legend(P_title)
     title('EMG Power')
     xlabel('frequency (Hz)')
     
     linkaxes(l,'xy')
+    axis tight
     
 % For single channel
 %     for k = 1:nP
