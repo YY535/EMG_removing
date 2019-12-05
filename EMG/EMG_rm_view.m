@@ -16,6 +16,7 @@ function EMG_rm_view(FileBase, varargin)
 %       figure_handel: the figure
 %       t_pause: if play the data automatically. if t_pause>0, then play with
 %               pause(t_pause), otherwise it's pause. 
+%       ifEMGthr: if plot EMG_thrd
 % 
 % Related functions: 
 % EMG_rm_main.m, EMG_rm_pip.m
@@ -25,7 +26,7 @@ function EMG_rm_view(FileBase, varargin)
 % Last Modified: 27.11.2019.
 
 
-[Period,Channels,WinLen,useT,sfactor,figure_handel,t_pause] = DefaultArgs(varargin, {[],[],[],true,-1,0,0});
+[Period,Channels,WinLen,useT,sfactor,figure_handel,t_pause,ifEMGthr] = DefaultArgs(varargin, {[],[],[],true,-1,0,0,false});
 
 
 if exist([FileBase,'.lfpinterp'],'file')
@@ -44,6 +45,12 @@ else
 end
 if figure_handel<1
     figure_handel = figure;
+end
+a = dir('*.EMG_Cluster.mat');
+try
+    load(a(1).name,'EMG_thrd')
+catch
+    warning('No EMG_Cluster file in current folder!!')
 end
 %% THE DATA TO SHOW
 par=LoadXml(FileBase);
@@ -117,6 +124,10 @@ for k = 1:nPeriod
     end
     tmp_x = double(mlfp.Data.x(Channels,tmp))';
     plot(tmp_t,opf1(tmp_x/sfactor),'k')
+    if ifEMGthr
+        hold on
+        plot(tmp_t, EMG_thrd(tmp)*10,'g+')
+    end
     ylabel('channels')
     title('Before')
     axis tight

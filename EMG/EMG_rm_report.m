@@ -1,15 +1,17 @@
-function EMG_rm_report(FileName,Channels)
-% EMG_rm_report(FileName,Channels)
+function EMG_rm_report(varargin)
+% EMG_rm_report(FileName,Channels,savedir)
 % report the dynamics of EMG components.
 % Inputs: 
 %   FileName: EMG removing files you want to check. 
 %             defualt: the .EMG_rm.sh* 
 %   Channels: the channels to compare. 
+%   savedir: the path you want to save the figures. 
 % 
 % Error contact: chen at biologie.uni-muenchen.de
 % 
 % Last Modified: 01.12.2019.
 %%
+[FileName,Channels,savedir] = DefaultArgs(varargin, {[],[],pwd});
 if isempty(FileName)
     a = dir('*.EMG_rm.sh*.mat');
     nfile = length(a);
@@ -126,6 +128,6 @@ for kk = 1:nfile
         subplot(nchunk,nclm,5)
         title('Cross Specral Density')
         legend('EMG-raw','EMG-clean','raw-clean')
-        savefig(nshk,sprintf('%s.sh.%d.EMG_rm_report.fig',FileBase,tmp_sh))
+        savefig(nshk,sprintf('%s/%s.sh.%d.EMG_rm_report.fig',savedir,FileBase,tmp_sh))
     end
 end
