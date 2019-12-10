@@ -51,7 +51,7 @@ if nt<nch
 end
 nchunks = fix(nt/min(15*60*lfpSamplingRate, fix(nt/nchunks)));
 if isempty(swin)
-    swin = fix(lfpSamplingRate/2);
+    swin = fix(lfpSamplingRate/10);
 end
 
 %% DATA PREPROCESSING
@@ -84,7 +84,7 @@ ttv_v = sum(abs(diff(tmp_x(:,rids),1,2)),2);
 Xtrain=[ttv_v,cov_v];
 
 % cluster with ICA. 
-[A, W] = fastica(Xtrain');
+[A, W] = fastica(Xtrain','verbose','off');
 tmp_A = abs(A(1,:))./max(abs(A(2,:)),0);
 if tmp_A(2)>tmp_A(1)
     A = A(:,[2 1]);

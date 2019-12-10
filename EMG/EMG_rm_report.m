@@ -1,5 +1,5 @@
-function EMG_rm_report(varargin)
-% EMG_rm_report(FileName,Channels,savedir)
+function [AW, Power,axs] = EMG_rm_report(varargin)
+% [AW, Power] = EMG_rm_report(FileName,Channels,savedir)
 % report the dynamics of EMG components.
 % Inputs: 
 %   FileName: EMG removing files you want to check. 
@@ -11,7 +11,7 @@ function EMG_rm_report(varargin)
 % 
 % Last Modified: 01.12.2019.
 %%
-[FileName,Channels,savedir] = DefaultArgs(varargin, {[],[],pwd});
+[FileName,Channels,savedir,plot_coh] = DefaultArgs(varargin, {[],[],pwd,true});
 if isempty(FileName)
     a = dir('*.EMG_rm.sh*.mat');
     nfile = length(a);
@@ -27,6 +27,11 @@ elseif ~iscell(FileName)
 else
     nfile = length(FileName);
 end
+if plot_coh
+    TITLE = 'CHO';
+else
+    TITLE = 'CSD';
+end
 FileBase = FileName{1}(1:(find(FileName{1}=='.',1,'first')-1));
 opf_nA = @(x)bsxfun(@rdivide,x,sqrt(sum(x.^2)));
 opf_A = @(x)(bsxfun(@rdivide,x,SREaffineV(1:size(x,1),x)));
@@ -40,6 +45,7 @@ for kk = 1:nfile
     tmp_File = FileName{kk};
     load(tmp_File)
     [nchunk,nshank] = size(AW);
+    Power = cell(nshank,1);
     nshk = [];
     if isempty(Channels)
         ch = zeros(nshank,1);
@@ -76,21 +82,35 @@ for kk = 1:nfile
     for n=1:nshank
         tmp_sh = denoise_shank(n);
         nshk = figure;% (1);clf
+        
         for k = 1:nchunk
-            subplot(nchunk,nclm,1+nclm*(k-1))
+            axs(k,1) = subplot(nchunk,nclm,1+nclm*(k-1));
+            if k ==1
+                set_Position(:,1) = axs(1,1).Position([1 3:4]);
+            end
             plot(par.AnatGrps(tmp_sh).Channels,opf_nA(AW{k}.A),'Color',[.4 .4 .4])
             hold on
             plot(par.AnatGrps(tmp_sh).Channels,opf_nA(As{k}),'r', 'LineWidth',2)
             axis tight
+            axs(k,1).Position([1 3:4]) = set_Position(:,1);
             
-            subplot(nchunk,nclm,2+nclm*(k-1))
+            axs(k,2) = subplot(nchunk,nclm,2+nclm*(k-1));
+            if k ==1
+                set_Position(:,2) = axs(1,2).Position([1 3:4]);
+            end
             tmp_c = opf_C(AW{k}.A);
             [~, EMG_comp] = max(tmp_c);
-            boxplot(tmp_c)
+            AW{k}.flatness = tmp_c;
+            boxplot(axs(k,2),tmp_c);
             hold on
             plot(tmp_c(EMG_comp),'ro')
+            axs(k,2).Position([1 3:4]) = set_Position(:,2);
+            axs(k,2).Position(2) = axs(k,1).Position(2);
             
-            subplot(nchunk,nclm,3+nclm*(k-1))
+            axs(k,3) = subplot(nchunk,nclm,3+nclm*(k-1));
+            if k ==1
+                set_Position(:,3) = axs(1,3).Position([1 3:4]);
+            end
             hx = log(abs(hilbert(ButFilter(EMG_au{k},4,EMG_par.hp_freq/(EMG_par.lfpSamplingRate/2),'high'))));
             [h1, b1] = hist(hx(EMG_thrd(sug_period(k,1):sug_period(k,2))),100);
             [h2, b2] = hist(hx(~EMG_thrd(sug_period(k,1):sug_period(k,2))),100);
@@ -98,8 +118,12 @@ for kk = 1:nfile
             hold on
             plot(b2, h2/sum(h2))
             axis tight
+            axs(k,3).Position([1 3:4]) = set_Position(:,3);
             
-            subplot(nchunk,nclm,4+nclm*(k-1))
+            axs(k,4) = subplot(nchunk,nclm,4+nclm*(k-1));
+            if k ==1
+                set_Position(:,4) = axs(1,4).Position([1 3:4]);
+            end
             if isfield(armodel,'ARmodel')
                 [yo, fo] = mtcsdfast([WhitenSignal(EMG_au{k}*As{k}(ch(n)),[],[],armodel.ARmodel), lfp(sug_period(k,1):sug_period(k,2),n), dlfp(sug_period(k,1):sug_period(k,2),n)],...
                     [],par.lfpSampleRate);
@@ -109,25 +133,57 @@ for kk = 1:nfile
             end
             plot(fo,abs(sq([yo(:,1,1),yo(:,2,2),yo(:,3,3)])))
             axis tight
+            axs(k,4).Position([1 3:4]) = set_Position(:,4);
             
-            subplot(nchunk,nclm,5+nclm*(k-1))
-            plot(fo,abs(sq([yo(:,1,2),yo(:,1,3),yo(:,2,3)])))
+            axs(k,5) = subplot(nchunk,nclm,5+nclm*(k-1));
+            if k ==1
+                set_Position(:,5) = axs(1,5).Position([1 3:4]);
+            end
+            if plot_coh
+                plot(fo,abs(sq([yo(:,1,2)./sqrt(yo(:,1,1).*yo(:,2,2)),yo(:,1,3)./sqrt(yo(:,1,1).*yo(:,3,3)),yo(:,2,3)./sqrt(yo(:,2,2).*yo(:,3,3))])))
+            else
+                plot(fo,abs(sq([yo(:,1,2),yo(:,1,3),yo(:,2,3)])))
+            end
             axis tight
-            
+            Power{n}(:,:,k) = sq(yo(:,[1 5 9 4 7]));
+            axs(k,5).Position([1 3:4]) = set_Position(:,5);
         end
-        subplot(nchunk,nclm,1)
+        % subplot(nchunk,nclm,1)
+        subplot(axs(1,1))
         title('norm. loading')
-%         subplot(nchunk,nclm,2)
-%         title('inv.SRE')
-        subplot(nchunk,nclm,3)
+        % subplot(nchunk,nclm,(nchunk-1)*nclm +1)
+        subplot(axs(nchunk,1))
+        xlabel('Channel')
+        % subplot(nchunk,nclm,2)
+        subplot(axs(1,2))
+        title('inv.SRE')
+        % subplot(nchunk,nclm,3)
+        subplot(axs(1,3))
         title('log(high frq power)')
-        legend('higher EMG','otherwise')
-        subplot(nchunk,nclm,4)
+        ll = legend('higher EMG','otherwise');
+        ll.Location = 'best';
+        % subplot(nchunk,nclm,4)
+        subplot(axs(1,4))
         title('Spectrum')
-        legend('EMG','raw','clean')
-        subplot(nchunk,nclm,5)
-        title('Cross Specral Density')
-        legend('EMG-raw','EMG-clean','raw-clean')
-        savefig(nshk,sprintf('%s/%s.sh.%d.EMG_rm_report.fig',savedir,FileBase,tmp_sh))
+        ll = legend('EMG','raw','clean');
+        ll.Location = 'best';
+        % subplot(nchunk,nclm,5)
+        subplot(axs(1,5))
+        title(TITLE)
+        ll = legend('EMG-raw','EMG-clean','raw-clean');
+        ll.Location = 'best';
+        for kn = 1:nclm
+            tmp = nan(1,4);
+            for k = 1:nchunk
+                tmp = [min(axs(k,kn).XLim(1), tmp(1)), max(axs(k,kn).XLim(2), tmp(2)), ...
+                       min(axs(k,kn).YLim(1), tmp(3)), max(axs(k,kn).YLim(2), tmp(4))];
+            end
+            linkaxes(axs(:,kn),'xy');
+            erase_ticks(axs(:,kn),'last');
+            axes(axs(1,kn));
+            axis(tmp);
+        end
+        savefig(nshk,sprintf('%s/%s.sh.%d.EMG_rm_report.%s.fig',savedir,FileBase,tmp_sh,TITLE))
     end
+    save(sprintf('%s/%s.EMG_rm_report.power.mat',savedir,FileBase),'AW','Power','EMG_par')
 end

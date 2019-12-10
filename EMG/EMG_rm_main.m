@@ -30,7 +30,7 @@ function EMG_rm_main(FileBase,varargin)
 % 
 % Last Modified: 01.12.2019.
 
-[savedir,denoise_shank,cleanEMGch,numOfIC, hp_freq,nchunks, cmp_method,down_sample, save_together] = DefaultArgs(varargin, {pwd,1,[],50, 100,8, 'hw',3, true});
+[savedir,denoise_shank,cleanEMGch,numOfIC, hp_freq,nchunks, cmp_method,down_sample, save_together] = DefaultArgs(varargin, {pwd,1,[],50, 100,6, 'hw',3, true});
 
 if exist([FileBase,'.lfpinterp'],'file')
     LFPfile = [FileBase,'.lfpinterp'];
@@ -105,11 +105,11 @@ Ws = cell(nPeriod,nshank);
 As = cell(nPeriod,nshank);
 EMG_au = cell(nPeriod,nshank);
 AW  = cell(nPeriod,nshank);
-
 for n = 1:nshank
     HP = par.AnatGrps(denoise_shank(n)).Channels +1- par.AnatGrps(1).Channels(1);
     HPs = [HPs;HP(:)];
     for k = 1:nPeriod
+        fprintf('\rshank%d, period%d in %d...', n, k, nPeriod)
         tmp_Period = sug_period(k,:);
         save_range{1} = [tmp_Period;HP(1) HP(end)];
         [~, Ws{k,n}, As{k,n}, EMG_au{k,n}, AW{k,n}, armodel] = EMG_rm_long(LoadBinary(LFPfile,HP,par.nChannels,2,[],[],tmp_Period)',   ...
@@ -136,8 +136,9 @@ end
 clear m mflp
 fprintf('\nDone\n')
 %% CHECK RESULTS:
-% PYR_Channel = 37;
-% EMG_rm_report([],PYR_Channel);
-% EMG_rm_viewspec(PYR_Channel,[])
+PYR_Channel = 37;
+EMG_rm_report();% ([],PYR_Channel);
+EMG_rm_viewnoise();% (PYR_Channel,[])
+EMG_rm_viewspec();
 
 % EOF

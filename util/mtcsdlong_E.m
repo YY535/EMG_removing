@@ -119,7 +119,7 @@ for Block=1:nBlocks
     end
     
     for Ch1 = 1:nChannels
-        for Ch2 = 1:nChannels % don't compute cross-spectra twice
+        for Ch2 = Ch1:nChannels % don't compute cross-spectra twice
             
             if (Ch1 == Ch2)
                 % for diagonal elements (i.e. power spectra) leave unchanged

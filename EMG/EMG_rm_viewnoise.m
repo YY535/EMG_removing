@@ -61,6 +61,7 @@ for  ksh = 1:nsh
         tmp_t = tmp;
     end
     tmp_x = double(mlfp.Data.x(HP,tmp))';
+    EMGc = tmp_x(:,fix(end/2));
     plot(tmp_t,opf1(tmp_x/sfactor),'k')
     hold on
     plot(tmp_t,EMG_thrd(tmp)*10,'g+')
@@ -71,10 +72,13 @@ for  ksh = 1:nsh
     
     % the cleaned signal
     s2=subplot(2,1,2);
-    
     tmp_x = double(m.Data.x(HP,tmp))';
-    plot(tmp_t,opf1(tmp_x/sfactor),'r');
+    EMGc = 5+zscore(EMGc-tmp_x(:,fix(end/2)));
+    p1 = plot(tmp_t,opf1(tmp_x/sfactor),'r');
+    hold on
+    p2 = plot(tmp_t,EMGc,'b');
     axis tight
+    legend([p1(1), p2],{'dlfp', 'EMG'})
     title('After')
     xlabel(Xtitle)
     linkaxes([s1 s2],'xy')

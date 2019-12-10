@@ -17,7 +17,7 @@ function EMG_rm_viewspec(varargin)
 % Last Modified: 01.12.2019.
 
 %%
-[Channel,Periods,savedir,isnorm,nFFT,savespec] = DefaultArgs(varargin, {[],[],pwd,true,[],true});
+[Channel,Periods,savedir,isnorm,nFFT,savespec,plot_coh] = DefaultArgs(varargin, {[],[],pwd,true,[],true,true});
 
 a = dir('*.EMG_rm.sh*.mat');
 FileName = a(1).name;
@@ -26,7 +26,7 @@ FileBase = FileName(1:(find(FileName=='.',1,'first')-1));
 a = dir('*.EMG_Cluster.mat');
 load(a(1).name)
 if isnorm 
-    NORM = ' normalized';
+    NORM = 'normalized';
 else
     NORM = [];
 end
@@ -47,7 +47,11 @@ elseif ~iscell(Periods)
 else
     nP = length(Periods);
 end
-
+if plot_coh
+    CNAME = 'COH';
+else
+    CNAME = 'CSD';
+end
 mlfp = memmapfile(LFPfile,'Format','int16');
 data_range = [par.nChannels, length(mlfp.Data)/par.nChannels];
 clear mlfp
@@ -83,7 +87,7 @@ for ksh = 1:length(denoise_shank)
             clear tmp_y2
         end
         f = f(f<400);
-        clear mlfp lfp dlfp
+        clear mlfp lfp dlfp EMG
         if savespec
             save(sprintf('%s/%s.sh.%d.EMG_Spec.mat',savedir,FileBase,tmp_shank),'y2','f','t','-v7.3')
         end
@@ -113,6 +117,7 @@ for ksh = 1:length(denoise_shank)
     else
         opf_p = @(x)(x);
     end
+    ax1 = ax_subplots(nP, 3, [.05 .35 .65 .6],[.1 .1]);
     % For depth profile:
     for k = 1:nP
         tmp_t = false(nt,1);
@@ -121,7 +126,8 @@ for ksh = 1:length(denoise_shank)
             tmp_t(t<tmp_Period(n,2) & t>=tmp_Period(n,1)) = true;
         end
         % RAW DATA
-        subplot(nrows,nclm,(k-1)*nclm +1)
+        axes(ax1(k,1))
+        % subplot(nrows,nclm,(k-1)*nclm +1)
         tmp = zeros(nf,nch);
         for n = 1:nch
             tmp(:,n) = mean(abs(y2{n}(tmp_t,:,2)),1);
@@ -130,9 +136,13 @@ for ksh = 1:length(denoise_shank)
         c.EdgeColor='none';
         ylabel(P_title{k})
         colorbar
+%         if k<nP
+%             set(gca,'XTick',[])
+%         end
         
         % CLEAN DATA
-        subplot(nrows,nclm,(k-1)*nclm +2)
+        axes(ax1(k,2))
+%         subplot(nrows,nclm,(k-1)*nclm +2)
         tmp = zeros(nf,nch);
         for n = 1:nch
             tmp(:,n) = mean(abs(y2{n}(tmp_t,:,3)),1);
@@ -140,9 +150,13 @@ for ksh = 1:length(denoise_shank)
         c = pcolor(f, HP, opf_p(tmp)');
         c.EdgeColor='none';   
         colorbar
+        if k<nP
+            set(gca,'XTick',[])
+        end
         
         % EMG-CLEAN CSD
-        subplot(nrows,nclm,(k-1)*nclm +3)
+        axes(ax1(k,3))
+%         subplot(nrows,nclm,(k-1)*nclm +3)
         tmp = zeros(nf,nch);
         for n = 1:nch
             tmp(:,n) = mean(abs(y2{n}(tmp_t,:,4)),1);
@@ -150,33 +164,55 @@ for ksh = 1:length(denoise_shank)
         c = pcolor(f, HP, tmp');
         c.EdgeColor='none';
         colorbar
+        if k<nP
+            set(gca,'XTick',[])
+        end
         
         EMGs(:,k) = mean(abs(y2{ch}(tmp_t,:,1)),1);
-        EMGch(:,k) = mean(abs(y2{ch}(tmp_t,:,4)),1);
+        tmp_ = mean(abs(y2{ch}(tmp_t,:,3)),1);
+        if plot_coh
+            EMGch(:,k) = mean(abs(y2{ch}(tmp_t,:,4)),1)./sqrt(EMGs(:,k)'.*tmp_);
+        else
+            EMGch(:,k) = mean(abs(y2{ch}(tmp_t,:,4)),1);
+        end
         
     end
-    
-    subplot(nrows,nclm,1)
-    title(['lfp', NORM])
-    subplot(nrows,nclm,2)
-    title(['dlfp', NORM])
-    subplot(nrows,nclm,3)
+    erase_ticks(ax1);
+    axes(ax1(nP,1))
+%     subplot(nrows,nclm,1)
+    title(['lfp ', NORM])
+    axes(ax1(nP,2))
+%     subplot(nrows,nclm,2)
+    title(['dlfp ', NORM])
+    axes(ax1(nP,3))
+%     subplot(nrows,nclm,3)
     title('EMG-dlfp')
+    linkaxes(ax1,'xy')
     
-    l(1) = subplot(nrows,nclm,nclm);
+    ax2 = ax_subplots(1,2,[.75 .35 .25 .6]);
+    axes(ax2(1))
+    %     l(1) = subplot(nrows,nclm,nclm);
     plot(f,EMGch)
-    title('EMG-pyr CSD')
-    xlabel('frequency (Hz)')
+    lg = legend(P_title);
+    if plot_coh
+        title(['EMG-pyr ',CNAME])
+    else
+        title(['EMG-pyr ',CNAME])
+    end
     
-    l(2) = subplot(nrows,nclm,2*nclm);
+    axes(ax2(2))
+%     l(2) = subplot(nrows,nclm,2*nclm);
     plot(f,EMGs)
-    legend(P_title)
-    title('EMG Power')
+    lg.Location = 'best';
     xlabel('frequency (Hz)')
-    
-    linkaxes(l,'xy')
+    title('EMG Power')
+    %     xlabel('frequency (Hz)')
+    if ~plot_coh
+        erase_ticks(ax2);
+        linkaxes(ax2,'xy')
+    end
     axis tight
-    
+
 % For single channel
 %     for k = 1:nP
 %         subplot(nrows,nclm,k)
@@ -192,24 +228,28 @@ for ksh = 1:length(denoise_shank)
     %% THE SPECTROGRAM
     nt = length(t);
     tt = 1:500;
-    subplot(nrows,1,nrows-2)
+    ax3 = ax_subplots(3,1,[.02 .03 .98 .3]);
+    axes(ax3(1))
+%     subplot(nrows,1,nrows-2)
     c = pcolor(t(tt),f(f<500),sq(y2{ch}(tt,f<500,1,1))');
     c.EdgeColor='none';
     ylabel('EMG')
     colorbar
+    xlabel('time(s)')
     
-    subplot(nrows,1,nrows-1)
+    axes(ax3(2))
+%     subplot(nrows,1,nrows-1)
     c = pcolor(t(tt),f,sq(y2{ch}(tt,:,2))');
     c.EdgeColor='none';
     ylabel('lfp')
     colorbar
     
-    subplot(nrows,1,nrows)
+    axes(ax3(3))
+%     subplot(nrows,1,nrows)
     c = pcolor(t(tt),f,sq(y2{ch}(tt,:,3))');
     c.EdgeColor='none';
     ylabel('dlfp')
-    xlabel('time(s)')
     colorbar
-    
-    savefig(kf,sprintf('%s/%s.sh.%d.EMG_viewspec.fig',savedir,FileBase,tmp_shank))
+    erase_ticks(ax3);
+    savefig(kf,sprintf('%s/%s.sh.%d.EMG_viewspec%s.%s.fig',savedir,FileBase,tmp_shank,NORM,CNAME))
 end

@@ -99,18 +99,22 @@ if isempty(armodel)
     end
 elseif isstr(armodel)
     armodel = load(armodel);
-    wx=WhitenSignal(x,[],[],armodel.ARmodel);
+    tmp_ar = armodel.ARmodel;
+    wx=WhitenSignal(x,[],[],tmp_ar);
 elseif isfield(armodel,'ARmodel')
-    wx=WhitenSignal(x,[],[],armodel.ARmodel);
+    tmp_ar = armodel.ARmodel;
+    wx=WhitenSignal(x,[],[],tmp_ar);
 else 
     try
+        tmp_ar = armodel;
         wx=WhitenSignal(x,[],[],armodel);
     catch 
         warning('Something wrong with the AR model you give, try whiten without given model.')
         [wx, armodel]=WhitenSignal(x,[],[],[],1);
+        tmp_ar = armodel;
     end
 end
-AW.armodel = armodel;
+AW.armodel = tmp_ar;
 % opf_A = @(x)(bsxfun(@rdivide,x,std(x)));
 chmap = 1:nch;
 opf_A = @(x)(bsxfun(@rdivide,x,SREaffineV(chmap,x)));
@@ -131,6 +135,21 @@ switch lower(cmp_method) %
         [Ax, Wx] = fastica(Wh(rod,:)*wx(1:down_sample:end,:)','verbose','off');
         A = Ah(:,rod)*Ax;
         W = Wx*Wh(rod,:);
+        if (sum(abs(sum(opf_A(A)))>nch)>1) || sum(abs(sum(opf_A(A)))>(2*nch))<1
+            fprintf('\nrecompute...\n')
+            wx=WhitenSignal(wx,[],[],tmp_ar);
+            nn = 1;
+            while  ((sum(abs(sum(opf_A(A)))>nch)>1) || sum(abs(sum(opf_A(A)))>(2*nch))<1)&&(nn<5)
+                if ((sum(abs(sum(opf_A(Ah)))>nch)>1) || sum(abs(sum(opf_A(Ah)))>(2*nch))<1)
+                    [Ah, Wh] = fastica(hx(selectedprd,:)', 'numOfIC', numOfIC,'verbose','off');
+                end
+                [Ax, Wx] = fastica(Wh*wx(nn:down_sample:end,:)','verbose','off');
+                A = Ah*Ax;
+                W = Wx*Wh;
+                nn = nn+1;
+                fprintf('\r%d in %d...\n',nn,5)
+            end
+        end
         AW.Ah = Ah;
         AW.Ax = Ax;
         AW.Wh = Wh;
@@ -193,7 +212,7 @@ if nargout>1
     varargout{3} = As;
     varargout{4} = EMG_au;
     varargout{5} = AW;
-    varargout{6} = armodel;
+    varargout{6} = tmp_ar;
 else 
     isave = true;
 end
