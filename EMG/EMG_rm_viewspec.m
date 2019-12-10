@@ -13,7 +13,7 @@ function EMG_rm_viewspec(varargin)
 %   WinLength: length of moving window
 %   savespec: if one wants to save the computed spectrum
 %
-% Tips: adjust nFFT and WinLength for the long files. 
+% Tips: play with nFFT and WinLength for the long files. 
 % 
 % Error contact: chen at biologie.uni-muenchen.de
 % 
