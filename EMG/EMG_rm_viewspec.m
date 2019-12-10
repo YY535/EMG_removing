@@ -20,7 +20,7 @@ function EMG_rm_viewspec(varargin)
 % Last Modified: 01.12.2019.
 
 %%
-[Channel,Periods,savedir,isnorm,nFFT,WinLength,savespec,plot_coh] = DefaultArgs(varargin, {[],[],pwd,true,[],[],true,true});
+[Channel,Periods,savedir,isnorm,nFFT,WinLength,savespec,plot_coh] = DefaultArgs(varargin, {[],[],pwd,false,[],[],true,true});
 
 a = dir('*.EMG_rm.sh*.mat');
 FileName = a(1).name;

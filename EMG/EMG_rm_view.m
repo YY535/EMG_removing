@@ -1,5 +1,5 @@
-function EMG_rm_view(FileBase, varargin)
-% EMG_rm_view(FileBase, [Period, Channels, WinLen, useT, sfactor, figure_handel,t_pause])
+function EMG_rm_view(varargin)
+% EMG_rm_view([FileBase, Period, Channels, WinLen, useT, sfactor, figure_handel,t_pause])
 % 
 % Viewing the cleaned data. 
 % To use this function, please make sure that your .lfp and .lfpd files are
@@ -26,8 +26,12 @@ function EMG_rm_view(FileBase, varargin)
 % Last Modified: 27.11.2019.
 
 
-[Period,Channels,WinLen,useT,sfactor,figure_handel,t_pause,ifEMGthr] = DefaultArgs(varargin, {[],[],[],true,-1,0,0,false});
+[FileBase,Period,Channels,WinLen,useT,sfactor,figure_handel,t_pause,ifEMGthr] = DefaultArgs(varargin, {[],[],[],[],true,-1,0,0,false});
 
+if isempty(FileBase)
+    cur_dir = pwd;
+    FileBase = cur_dir((find(cur_dir == '/',1,'last')+1):end);
+end
 
 if exist([FileBase,'.lfpinterp'],'file')
     LFPfile = [FileBase,'.lfpinterp'];
