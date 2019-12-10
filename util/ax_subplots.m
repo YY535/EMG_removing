@@ -1,6 +1,26 @@
 function ax = ax_subplots(nr, nclm, varargin)
 % ax = ax_subplots(nr, nclm, tot_Position,margins,tiling)
-%  tiling: tiling methods
+% This function generate subplot objects with given position. 
+% Inputs: 
+%   nr: number of rows
+%   nclm: number of columns 
+%   tot_Position: size and location of the frame which you want to put all
+%                 the subplots.four-element vector of the form 
+%                 [left bottom width height].
+%   margins: the ratio of the margins to subplots, e.g., [.1 .1]
+%   tiling: the tiling methods: 1. filling in
+%                               2. left some margin to the bottom. 
+% 
+% Related functions:
+% erase_ticks.m, EMG_rm_viewnoise.m, EMG_rm_viewspec.m
+% 
+% This function is a part of the EMG_removing toolbox but serves general
+% purpose.
+% 
+% errors contact: chen at biologie.uni-muenchen.de
+% 
+% last modified: 10.12.2019
+
 
 [tot_Position,margins,tiling] = DefaultArgs(varargin, {[.05 .05 .9 .9], [.1 .1],2});
 if length(margins)<2
