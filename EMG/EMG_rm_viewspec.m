@@ -10,6 +10,7 @@ function EMG_rm_viewspec(varargin)
 %   isnorm: whether to plot the normalized spectrum for lfp and dlfp. 
 %           defualt: true
 %   nFFT: nfft to compute spectrum
+%   WinLength: length of moving window
 %   savespec: if one wants to save the computed spectrum
 % 
 % Error contact: chen at biologie.uni-muenchen.de
@@ -17,7 +18,7 @@ function EMG_rm_viewspec(varargin)
 % Last Modified: 01.12.2019.
 
 %%
-[Channel,Periods,savedir,isnorm,nFFT,savespec,plot_coh] = DefaultArgs(varargin, {[],[],pwd,true,[],true,true});
+[Channel,Periods,savedir,isnorm,nFFT,WinLength,savespec,plot_coh] = DefaultArgs(varargin, {[],[],pwd,true,[],[],true,true});
 
 a = dir('*.EMG_rm.sh*.mat');
 FileName = a(1).name;
@@ -82,7 +83,7 @@ for ksh = 1:length(denoise_shank)
                 dlfp=WhitenSignal(dlfp,[],[],armodel);
                 EMG=WhitenSignal(EMG,[],[],armodel);
             end
-            [tmp_y2, f, t, ~, ~,~] = mtcsdlong_E([EMG,lfp,dlfp],nFFT,par.lfpSampleRate);
+            [tmp_y2, f, t, ~, ~,~] = mtcsdlong_E([EMG,lfp,dlfp],nFFT,par.lfpSampleRate, WinLength);
             y2{n}=tmp_y2(:,f<400,[1 5 9 7]);
             clear tmp_y2
         end
