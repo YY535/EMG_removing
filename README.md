@@ -32,9 +32,10 @@ The cleaned signals will be saved in `.lfpd` files. The EMG signals (`EMG_au`) a
 ```matlab
 cd('/path/to/your/sessions')
 EMG_rm_view()
-PYR_Channel = 37;% choose the channel to visualize the effect. or we'll use the channel with largest ripple power.
-EMG_rm_report([],PYR_Channel)
-EMG_rm_viewspec()% play with the nfft and the window length to compute the spectrum when you have a long file. 
+PYR_Channel = 37;% choose the channel to visualize the effect. 
+EMG_rm_report([],PYR_Channel) % or we'll use the channel with the largest ripple power.
+EMG_rm_viewspec()
+% play with the nfft and the window length to compute the spectrum when you have a long file. 
 EMG_rm_viewnoise()
 ```
 
