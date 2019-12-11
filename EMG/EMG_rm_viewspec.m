@@ -1,5 +1,5 @@
 function EMG_rm_viewspec(varargin)
-% EMG_rm_viewspec(Channel,Periods,savedir,isnorm,nFFT,savespec)
+% EMG_rm_viewspec(Channel,Periods,savedir,isnorm,nFFT,WinLength,savespec,plot_coh)
 % 
 % view the effect of EMG removal in specragram.
 % Inputs: 

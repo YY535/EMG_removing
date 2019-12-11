@@ -10,6 +10,9 @@ function varargout = EMG_rm_long(x, varargin)
 %   x: data, nt x nch.
 %   Optional: 
 %       SamplingRate: in Hz, default: 1000 Hz.
+%       rm_linenoise: if remove line noise. default: true
+%       line_thrd: power ratio between line band and other band. 
+%                  defualt: 1.8, I'm being conservative here.
 %       high_pass_freq: beginning of frequency to detect the muscle tone
 %                       default: 100 Hz.
 %       EMG_thrd: the thresholded data of the high EMG periods. Precomputed
@@ -63,7 +66,7 @@ function varargout = EMG_rm_long(x, varargin)
 %% COMPLETE VARIABLES
 
 cwd=pwd; %
-[LFPfs, high_pass_freq, EMG_thrd, if_rm_mean,armodel,cmp_method,down_sample,numOfIC,isave,save_range,FileName,savedir,save_together] = DefaultArgs(varargin, {1000, 100, [], true,[],'hw',3,0,false,[],[],[],true});
+[LFPfs, rm_linenoise, line_thrd, high_pass_freq, EMG_thrd, if_rm_mean,armodel,cmp_method,down_sample,numOfIC,isave,save_range,FileName,savedir,save_together] = DefaultArgs(varargin, {1000, true, 2, 100, [], true,[],'hw',3,0,false,[],[],[],true});
 [nt, nch] = size(x);
 if nt < nch 
     istr = true;
@@ -120,7 +123,19 @@ chmap = 1:nch;
 opf_A = @(x)(bsxfun(@rdivide,x,SREaffineV(chmap,x)));
 % SREaffineV use affine to fit, and compute the variance accordinglty.
 % Accounting for the linear leaking from other areas.  
-
+%% REMOVE LINE-NOISE
+if rm_linenoise
+    [A_line,W_line,A_rm_line,W_rm_line] = EMG_rm_linenoise(wx,line_thrd,LFPfs);
+    AW.A_rm_line = A_rm_line;
+    AW.W_rm_line = W_rm_line;
+    AW.A_line = A_line;
+    AW.W_line = W_line;
+    if ~isempty(A_line)
+        x = x - x*W_line'*A_line';
+        wx = wx - wx*W_line'*A_line';
+        fprintf('\n Line noise component removed...\n')
+    end
+end
 %% EMG COMPONENTS AND ACTIVITIES
 
 % Components from the high frequency.

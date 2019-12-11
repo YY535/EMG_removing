@@ -28,9 +28,9 @@ function EMG_rm_main(FileBase,varargin)
 %
 % Error contact: chen at biologie.uni-muenchen.de
 % 
-% Last Modified: 01.12.2019.
+% Last Modified: 11.12.2019.
 
-[savedir,denoise_shank,cleanEMGch,numOfIC, hp_freq,nchunks, cmp_method,down_sample, save_together] = DefaultArgs(varargin, {pwd,1,[],50, 100,6, 'hw',3, true});
+[savedir,denoise_shank,cleanEMGch,rm_linenoise,line_thrd, numOfIC, hp_freq,nchunks, cmp_method,down_sample, save_together] = DefaultArgs(varargin, {pwd,1,[],true,1.8,50, 100,6, 'hw',3, true});
 
 if exist([FileBase,'.lfpinterp'],'file')
     LFPfile = [FileBase,'.lfpinterp'];
@@ -113,7 +113,7 @@ for n = 1:nshank
         tmp_Period = sug_period(k,:);
         save_range{1} = [tmp_Period;HP(1) HP(end)];
         [~, Ws{k,n}, As{k,n}, EMG_au{k,n}, AW{k,n}, armodel] = EMG_rm_long(LoadBinary(LFPfile,HP,par.nChannels,2,[],[],tmp_Period)',   ...
-            Fs, hp_freq, ...
+            Fs, rm_linenoise,line_thrd,hp_freq, ...
             EMG_thrd(tmp_Period(1):tmp_Period(2)), true, ...
             armodel, cmp_method, down_sample,numOfIC,...
             true, save_range, FileBase, savedir, save_together);
@@ -139,6 +139,6 @@ fprintf('\nDone\n')
 PYR_Channel = 37;
 EMG_rm_report();% ([],PYR_Channel);
 EMG_rm_viewnoise();% (PYR_Channel,[])
-EMG_rm_viewspec();
+EMG_rm_viewspec([],[],[],[],2^9,par.lfpSampleRate);
 
 % EOF
