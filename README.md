@@ -31,7 +31,7 @@ EMG_rm_main(FileBase,[],denoise_shank,[],rm_line_noise)
 - Notice the function `EMG_rm_main.m` or `EMG_rm_long.m` by defualt automatically remove the line noise component. If you don't want to do this, set this parameter to `false`. 
 
 ## Check the Results:
-The cleaned signals will be saved in `.lfpd` files. The EMG signals (`EMG_au`) and the EMG components `AW.As` is saved in `FileBase.EMG_rm.mat`. To check the cleaned signal, use:
+The cleaned signals will be saved in `.lfpd` files and the EMG activity in `.emg`. The EMG signals (`EMG_au`) and the EMG components `AW.As` is saved in `FileBase.EMG_rm.mat`. To check the cleaned signal, use:
 
 ```matlab
 cd('/path/to/your/sessions')
