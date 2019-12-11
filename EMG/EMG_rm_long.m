@@ -160,7 +160,7 @@ switch lower(cmp_method) %
         A = Ah(:,rod)*Ax;
         W = Wx*Wh(rod,:);
         if (sum(abs(sum(opf_A(A)))>nch)>1) || sum(abs(sum(opf_A(A)))>(2*nch))<1
-            fprintf('\nrecompute...\n')
+            fprintf('recompute...\n')
             wx=WhitenSignal(wx,[],[],tmp_ar);
             nn = 1;
             while  ((sum(abs(sum(opf_A(A)))>nch)>1) || sum(abs(sum(opf_A(A)))>(2*nch))<1)&&(nn<5)
@@ -173,6 +173,7 @@ switch lower(cmp_method) %
                 nn = nn+1;
                 fprintf('\r%d in %d...\n',nn,5)
             end
+            fprintf('\n\n')
         end
         AW.Ah = Ah;
         AW.Ax = Ax;

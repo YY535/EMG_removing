@@ -80,9 +80,9 @@ if ~exist(FileName,'file')
 end
 
 myData = int16(zeros(1,Evts(end)));
-FileName = [FileBase,'.emg'];
-if ~exist(FileName,'file')
-    fileID = fopen(FileName,'w');
+EMGFileName = [FileBase,'.emg'];
+if ~exist(EMGFileName,'file')
+    fileID = fopen(EMGFileName,'w');
     fwrite(fileID, myData,'int16');
     fclose(fileID);
     clear myData
