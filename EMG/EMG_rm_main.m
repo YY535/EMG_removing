@@ -1,6 +1,7 @@
 function EMG_rm_main(FileBase,varargin)
-% EMG_rm_main(FileBases,[savedir,denoise_shank,cleanEMGch,numOfIC,...
-%                        hp_freq,nchunks, cmp_method,down_sample, ...
+% EMG_rm_main(FileBases,[savedir,denoise_shank,cleanEMGch,...
+%                        rm_linenoise,line_thrd,...
+%                        numOfIC,hp_freq,nchunks, cmp_method,down_sample, ...
 %                        save_together])
 %
 % The main function to perform denoising. 
@@ -13,6 +14,9 @@ function EMG_rm_main(FileBase,varargin)
 %       denoise_shank: the shanks for denoising. defualt: shank number 1
 %       cleanEMGch: the channels to detect EMG noise. defualt: 5 sampled in
 %                   the first shank.
+%       rm_linenoise: if remove line noise. default: true
+%       line_thrd: power ratio between line band and other band. 
+%                  defualt: 1.8, I'm being conservative here.
 %       Parameters used by the subfunctions: (computational details)
 %           numOfIC: number of ICs.
 %           hp_freq: high_pass_freq, defualt: 100 Hz
