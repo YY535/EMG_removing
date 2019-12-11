@@ -35,11 +35,13 @@ nsh = length(denoise_shank);
 
 mlfp = memmapfile(LFPfile,'Format',{'int16',data_range,'x'});
 m = memmapfile([FileBase, '.lfpd'],'Format',{'int16',data_range,'x'});
+emg = memmapfile([FileBase, '.emg'],'Format',{'int16',[1 data_range(2)],'x'});
 if useT
     Xtitle = 'time (s)';
 else
     Xtitle = 'Samples';
 end
+
 
 for  ksh = 1:nsh
     nsh = figure;
@@ -61,7 +63,6 @@ for  ksh = 1:nsh
         tmp_t = tmp;
     end
     tmp_x = double(mlfp.Data.x(HP,tmp))';
-    EMGc = tmp_x(:,fix(end/2));
     plot(tmp_t,opf1(tmp_x/sfactor),'k')
     hold on
     plot(tmp_t,EMG_thrd(tmp)*10,'g+')
@@ -73,7 +74,7 @@ for  ksh = 1:nsh
     % the cleaned signal
     s2=subplot(2,1,2);
     tmp_x = double(m.Data.x(HP,tmp))';
-    EMGc = 5+zscore(EMGc-tmp_x(:,fix(end/2)));
+    EMGc = 5+double(emg.Data.x(tmp));
     p1 = plot(tmp_t,opf1(tmp_x/sfactor),'r');
     hold on
     p2 = plot(tmp_t,EMGc,'b');

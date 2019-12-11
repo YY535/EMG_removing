@@ -73,10 +73,19 @@ clear mlfp
 myData = repmat(int16(0),1,par.nChannels*Evts(end));
 FileName = [FileBase,'.lfpd'];
 if ~exist(FileName,'file')
-fileID = fopen(FileName,'w');
-fwrite(fileID, myData,'int16');
-fclose(fileID);
-clear myData
+    fileID = fopen(FileName,'w');
+    fwrite(fileID, myData,'int16');
+    fclose(fileID);
+    clear myData
+end
+
+myData = int16(zeros(1,Evts(end)));
+FileName = [FileBase,'.emg'];
+if ~exist(FileName,'file')
+    fileID = fopen(FileName,'w');
+    fwrite(fileID, myData,'int16');
+    fclose(fileID);
+    clear myData
 end
 
 save_range = cell(2,1);

@@ -1,4 +1,4 @@
-function [A_line,W_line,A,W] = EMG_rm_linenoise(x,varargin)
+function [A_line,W_line,A,W,power_ratio,line_thrd] = EMG_rm_linenoise(x,varargin)
 % [A_line,W_line,A_rm_line,W_rm_line] = EMG_rm_linenoise(wx,[line_thrd,lfpSampleRate])
 % 
 % This function is intend to remove the line noise here. To reconstruct the
@@ -17,6 +17,8 @@ function [A_line,W_line,A,W] = EMG_rm_linenoise(x,varargin)
 %   W_line: the unmixing vector of line noise component
 %   A: the mixing matrix of the line noise component
 %   W: the unmixing matrix of the line noise component
+%   power_ratio
+%   line_thrd
 % 
 % Related functions: 
 % EMG_rm_long.m, EMG_rm_main.m.

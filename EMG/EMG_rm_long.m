@@ -125,14 +125,23 @@ opf_A = @(x)(bsxfun(@rdivide,x,SREaffineV(chmap,x)));
 % Accounting for the linear leaking from other areas.  
 %% REMOVE LINE-NOISE
 if rm_linenoise
-    [A_line,W_line,A_rm_line,W_rm_line] = EMG_rm_linenoise(wx,line_thrd,LFPfs);
+    [A_line,W_line,A_rm_line,W_rm_line,power_ratio,thrd] = EMG_rm_linenoise(wx,line_thrd,LFPfs);
     AW.A_rm_line = A_rm_line;
     AW.W_rm_line = W_rm_line;
     AW.A_line = A_line;
     AW.W_line = W_line;
+    AW.power_ratio = power_ratio;
+    Aw.thrd = thrd;
     if ~isempty(A_line)
-        x = x - x*W_line'*A_line';
-        wx = wx - wx*W_line'*A_line';
+        signals = x*W_line';
+        for n = 1:size(signals,2)
+            tmp_id = find(sign(signals(1:(end-1),n)).*sign(signals(2:end,n))<=0, 1,'first');
+            signals(1:tmp_id,n) = 0;
+            tmp_id = find(sign(signals(1:(end-1),n)).*sign(signals(2:end,n))<=0, 1,'last');
+            signals(tmp_id:end,n) = 0;
+        end
+        x = x - signals*A_line';
+        wx = wx - wx*W_line'*A_line'; % won't affect the results. 
         fprintf('\n Line noise component removed...\n')
     end
 end
@@ -248,6 +257,7 @@ if isave
         end
         FileName =  cwd((find(cwd=='/',1,'last')+1):end);
         LFPfile = sprintf('%s%s.lfpd',savedir,FileName);
+        EMGfile = sprintf('%s%s.emg',savedir,FileName);
         if exist(LFPfile,'file')
             warning(sprintf('%s already exist! Please check!\n Now saving to the %s.new files.', FileName, FileName))
             FileName = [FileName,'.new'];
@@ -259,13 +269,21 @@ if isave
         fileID = fopen(LFPfile,'w');
         fwrite(fileID, int16(x'),'int16');
         fclose(fileID);
+        
+        fileID = fopen(EMGfile,'w');
+        fwrite(fileID, int16(EMG_au'),'int16');
+        fclose(fileID);
     else
         if ~save_together
             save(sprintf('%s.EMG_rm.t%d-%d.ch%d-%d.mat',FileName,save_range{1}(1,:),save_range{1}(2,:)), 'AW','EMG_au','armodel')
         end
         LFPfile = sprintf('%s%s.lfpd',savedir,FileName);
+        EMGfile = sprintf('%s%s.emg',savedir,FileName);
         m = memmapfile(LFPfile,'Format',{'int16',save_range{2},'x'},'Writable',true);
         m.Data.x(save_range{1}(2,1):save_range{1}(2,2), save_range{1}(1,1):save_range{1}(1,2)) = int16(x');
+        clear m
+        m = memmapfile(EMGfile,'Format',{'int16',[1 save_range{2}(2)],'x'},'Writable',true);
+        m.Data.x(save_range{1}(1,1):save_range{1}(1,2)) = int16(EMG_au');
         clear m
     end
 end

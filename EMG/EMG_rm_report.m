@@ -38,7 +38,7 @@ opf_A = @(x)(bsxfun(@rdivide,x,SREaffineV(1:size(x,1),x)));
 opf_C = @(x)abs(sum(opf_A(x)));
 a = dir('*.EMG_Cluster.mat');
 load(a(1).name)
-nclm = 5;
+nclm = 7;
 
 for kk = 1:nfile
     %%
@@ -93,6 +93,7 @@ for kk = 1:nfile
             plot(par.AnatGrps(tmp_sh).Channels,opf_nA(As{k}),'r', 'LineWidth',2)
             axis tight
             axs(k,1).Position([1 3:4]) = set_Position(:,1);
+           
             
             axs(k,2) = subplot(nchunk,nclm,2+nclm*(k-1));
             if k ==1
@@ -146,7 +147,32 @@ for kk = 1:nfile
             end
             axis tight
             Power{n}(:,:,k) = sq(yo(:,[1 5 9 4 7]));
-            axs(k,5).Position([1 3:4]) = set_Position(:,5);
+            axs(k,5).Position([1 3:4]) = set_Position(:,5); 
+            
+            % LINE NOISE
+            axs(k,6) = subplot(nchunk,nclm,6+nclm*(k-1));
+            if k ==1
+                set_Position(:,6) = axs(1,6).Position([1 3:4]);
+            end
+            if isfield(AW{k},'A_rm_line')
+                plot(par.AnatGrps(tmp_sh).Channels,opf_nA(AW{k}.A_line),'Color',[.4 .4 .4])
+                hold on
+                plot(par.AnatGrps(tmp_sh).Channels,opf_nA(Aw{k}.A_rm_line),'r', 'LineWidth',2)
+                axis tight
+            end
+            axs(k,6).Position([1 3:4]) = set_Position(:,6);
+            
+            axs(k,7) = subplot(nchunk,nclm,7+nclm*(k-1));
+            if k ==1
+                set_Position(:,7) = axs(1,7).Position([1 3:4]);
+            end
+            if isfield(AW{k},'power_ratio')
+                boxplot(axs(k,7),AW{k}.power_ratio);
+                hold on
+                plot([.5 1.5], Aw.thrd*[1 1],'b')
+            end
+            axs(k,7).Position([1 3:4]) = set_Position(:,7);
+            
         end
         % subplot(nchunk,nclm,1)
         subplot(axs(1,1))
@@ -172,6 +198,10 @@ for kk = 1:nfile
         title(TITLE)
         ll = legend('EMG-raw','EMG-clean','raw-clean');
         ll.Location = 'best';
+        subplot(axs(1,6))
+        title('LineNoiseComp')
+        subplot(axs(1,7))
+        title('LN power ratio')
         for kn = 1:nclm
             tmp = nan(1,4);
             for k = 1:nchunk
