@@ -125,13 +125,13 @@ opf_A = @(x)(bsxfun(@rdivide,x,SREaffineV(chmap,x)));
 % Accounting for the linear leaking from other areas.  
 %% REMOVE LINE-NOISE
 if rm_linenoise
-    [A_line,W_line,A_rm_line,W_rm_line,power_ratio,thrd] = EMG_rm_linenoise(wx,line_thrd,LFPfs);
+    [A_rm_line,W_rm_line,A_line,W_line,power_ratio,thrd] = EMG_rm_linenoise(wx,line_thrd,LFPfs);
     AW.A_rm_line = A_rm_line;
     AW.W_rm_line = W_rm_line;
     AW.A_line = A_line;
     AW.W_line = W_line;
     AW.power_ratio = power_ratio;
-    Aw.thrd = thrd;
+    AW.thrd = thrd;
     if ~isempty(A_line)
         signals = x*W_line';
         for n = 1:size(signals,2)

@@ -154,11 +154,13 @@ for kk = 1:nfile
             if k ==1
                 set_Position(:,6) = axs(1,6).Position([1 3:4]);
             end
-            if isfield(AW{k},'A_rm_line')
+            if isfield(AW{k},'A_line')
                 plot(par.AnatGrps(tmp_sh).Channels,opf_nA(AW{k}.A_line),'Color',[.4 .4 .4])
                 hold on
-                plot(par.AnatGrps(tmp_sh).Channels,opf_nA(Aw{k}.A_rm_line),'r', 'LineWidth',2)
-                axis tight
+                if isfield(AW{k},'A_rm_line')
+                    plot(par.AnatGrps(tmp_sh).Channels,opf_nA(AW{k}.A_rm_line),'r', 'LineWidth',2)
+                    axis tight
+                end
             end
             axs(k,6).Position([1 3:4]) = set_Position(:,6);
             
@@ -169,7 +171,7 @@ for kk = 1:nfile
             if isfield(AW{k},'power_ratio')
                 boxplot(axs(k,7),AW{k}.power_ratio);
                 hold on
-                plot([.5 1.5], Aw.thrd*[1 1],'b')
+                plot([.5 1.5], AW{k}.thrd*[1 1],'b')
             end
             axs(k,7).Position([1 3:4]) = set_Position(:,7);
             

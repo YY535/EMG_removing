@@ -34,7 +34,7 @@ function EMG_rm_main(FileBase,varargin)
 % 
 % Last Modified: 11.12.2019.
 
-[savedir,denoise_shank,cleanEMGch,rm_linenoise,line_thrd, numOfIC, hp_freq,nchunks, cmp_method,down_sample, save_together] = DefaultArgs(varargin, {pwd,1,[],true,1.8,50, 100,6, 'hw',3, true});
+[savedir,denoise_shank,cleanEMGch,rm_linenoise,line_thrd, numOfIC, hp_freq,nchunks, cmp_method,down_sample, save_together] = DefaultArgs(varargin, {pwd,1,[],true,1.8,[], 100,6, 'hw',3, true});
 
 if exist([FileBase,'.lfpinterp'],'file')
     LFPfile = [FileBase,'.lfpinterp'];
@@ -61,7 +61,9 @@ Fs = par.lfpSampleRate;
 if isempty(cleanEMGch)
     cleanEMGch = fix(linspace(3,length(HP)-3,5));% channels to detect high coherence periods.
 end
-
+if isempty(numOfIC)
+    numOfIC = max(length(HP)*.8,min(16, length(HP)));
+end
 % [Evts,~] = RecEvents([FileBase,'.cat.evt'],Fs);
 % Evts = max(Evts,1);
 % Automatically compute the number of samples. 
