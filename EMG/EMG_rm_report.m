@@ -28,7 +28,7 @@ else
     nfile = length(FileName);
 end
 if plot_coh
-    TITLE = 'CHO';
+    TITLE = 'COH';
 else
     TITLE = 'CSD';
 end
