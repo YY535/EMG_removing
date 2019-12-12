@@ -132,16 +132,16 @@ if rm_linenoise
     AW.W_line = W_line;
     AW.power_ratio = power_ratio;
     AW.thrd = thrd;
-    if ~isempty(A_line)
-        signals = x*W_line';
+    if ~isempty(A_rm_line)
+        signals = x*W_rm_line';
         for n = 1:size(signals,2)
             tmp_id = find(sign(signals(1:(end-1),n)).*sign(signals(2:end,n))<=0, 1,'first');
             signals(1:tmp_id,n) = 0;
             tmp_id = find(sign(signals(1:(end-1),n)).*sign(signals(2:end,n))<=0, 1,'last');
             signals(tmp_id:end,n) = 0;
         end
-        x = x - signals*A_line';
-        wx = wx - wx*W_line'*A_line'; % won't affect the results. 
+        x = x - signals*A_rm_line';
+        wx = wx - wx*W_rm_line'*A_rm_line'; % won't affect the results. 
         fprintf('\n Line noise component removed...\n')
     end
 end
