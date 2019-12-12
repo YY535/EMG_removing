@@ -1,12 +1,17 @@
 function EMG_rm_pip(FileBases,denoise_shank)
-% EMG_rm_pip(FileBases,denoise_shank)
+% EMG_rm_pip(FileBases,denoise_shank,rm_linenoise,line_thrd)
 % The pipeline to process all the sessions on the current dictionary. 
 % 
 % Inputs: 
 %   FileBases: a cell of all the session names, defualt: sessions in
 %              the current dictionary. 
 %   denoise_shank: the shanks for denoising. [shanks] or a cell define
-%                   which shank to denoise in each session, respectively. 
+%                   which shank to denoise in each session, respectively.
+%   Optional:
+%       rm_linenoise: if remove line noise. default: true
+%       line_thrd: power ratio between line band and other band. 
+%                  defualt: 1.8, I'm being conservative here.
+
 % Notice: all the other recording except for the channels in the
 % denoise_shank will be directly copied to the .lfpd file.  
 % 
@@ -15,7 +20,9 @@ function EMG_rm_pip(FileBases,denoise_shank)
 % 
 % Error contact: chen at biologie.uni-muenchen.de
 % 
-% Last Modified: 27.11.2019.
+% Last Modified: 12.12.2019.
+
+[rm_linenoise,line_thrd] = DefaultArgs(varargin, {true,1.8});
 
 HeadDir = pwd;
 if isempty(FileBases)||nargin<1
@@ -46,7 +53,7 @@ for k  =1:nSession
     fprintf('\n\nStart denoising %s...\n\n',tmp_session)
     tmp_dir = sprintf('%s/%s', HeadDir,tmp_session);
     cd(tmp_dir)
-    EMG_rm_main(tmp_session,tmp_dir,denoise_shank{k})
+    EMG_rm_main(tmp_session,tmp_dir,denoise_shank{k},[],rm_linenoise,line_thrd)
     fprintf('\n\nFinished denoising %s...\n\n',tmp_session)
     cd(HeadDir)
 end
