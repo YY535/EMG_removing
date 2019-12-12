@@ -1,5 +1,5 @@
 function EMG_rm_pip(FileBases,denoise_shank)
-% EMG_rm_pip(FileBases,denoise_shank,rm_linenoise,line_thrd)
+% EMG_rm_pip(FileBases,denoise_shank,[rm_linenoise,line_thrd])
 % The pipeline to process all the sessions on the current dictionary. 
 % 
 % Inputs: 
@@ -16,7 +16,8 @@ function EMG_rm_pip(FileBases,denoise_shank)
 % denoise_shank will be directly copied to the .lfpd file.  
 % 
 % Related functions: 
-% EMG_rm_main.m, EMG_rm_view.m
+% EMG_rm_main.m, EMG_rm_view.m, EMG_rm_viewspec.m, EMG_rm_viewnoise.m, 
+% EMG_rm_report.m...
 % 
 % Error contact: chen at biologie.uni-muenchen.de
 % 

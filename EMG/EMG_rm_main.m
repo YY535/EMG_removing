@@ -1,7 +1,8 @@
 function EMG_rm_main(FileBase,varargin)
-% EMG_rm_main(FileBases,[savedir,denoise_shank,cleanEMGch,...
-%                        rm_linenoise,line_thrd,...
+% EMG_rm_main(FileBases,[savedir,denoise_shank,cleanEMGch, ...
+%                        rm_linenoise,line_thrd, ...
 %                        numOfIC,hp_freq,nchunks, cmp_method,down_sample, ...
+%                        nFFT, Winlength, ...
 %                        save_together])
 %
 % The main function to perform denoising. 
@@ -25,16 +26,19 @@ function EMG_rm_main(FileBase,varargin)
 %                       Highpass&Whiten('hw', a bit more stable). defualt: 'hw'
 %           down_sample: down sample the data to compute the EMG
 %                       components. default: 3.
+%           nFFT: nfft to compute spectrum in EMG_rm_viewspec.m
+%           WinLength: length of moving window in EMG_rm_viewspec.m
 %           save_together: if save all the chunks together. defult: true
 % 
 % Related functions: 
-% EMG_Cluster.m, EMG_rm_long.m, EMG_rm_pip.m
+% EMG_Cluster.m, EMG_rm_long.m, EMG_rm_pip.m, EMG_rm_viewspec.m, 
+% EMG_rm_report.m, EMG_rm_viewnoise.m
 %
 % Error contact: chen at biologie.uni-muenchen.de
 % 
 % Last Modified: 11.12.2019.
 
-[savedir,denoise_shank,cleanEMGch,rm_linenoise,line_thrd, numOfIC, hp_freq,nchunks, cmp_method,down_sample, save_together] = DefaultArgs(varargin, {pwd,1,[],true,1.8,[], 100,6, 'hw',3, true});
+[savedir,denoise_shank,cleanEMGch,rm_linenoise,line_thrd, numOfIC, hp_freq,nchunks, cmp_method,down_sample,nFFT, Winlength, save_together] = DefaultArgs(varargin, {pwd,1,[],true,1.8,[], 100,6, 'hw',3, 2^9,[],true});
 
 if exist([FileBase,'.lfpinterp'],'file')
     LFPfile = [FileBase,'.lfpinterp'];
@@ -63,6 +67,9 @@ if isempty(cleanEMGch)
 end
 if isempty(numOfIC)
     numOfIC = max(length(HP)*.8,min(16, length(HP)));
+end
+if isempty(Winlength)
+    Winlength = Fs;
 end
 % [Evts,~] = RecEvents([FileBase,'.cat.evt'],Fs);
 % Evts = max(Evts,1);
@@ -154,6 +161,6 @@ fprintf('\nDone\n')
 PYR_Channel = 37;
 EMG_rm_report();% ([],PYR_Channel);
 EMG_rm_viewnoise();% (PYR_Channel,[])
-EMG_rm_viewspec([],[],[],[],2^9,par.lfpSampleRate);
+EMG_rm_viewspec([],[],[],[],nFFT,Winlength);
 
 % EOF
