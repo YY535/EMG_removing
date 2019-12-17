@@ -63,7 +63,6 @@ tmp_x = zscore(tmp_x); % zscore to compute the coherence instead of covariance.
 % I guess it's not a big deal to use the covariance. 
 
 %% DETECT HIGH EMG PERIODS
-
 % pairwise coherence with sliding window (here I just using the mean). 
 cov_x = cell(nch);
 lwin = fix(lwinms*lfpSamplingRate/1000);
@@ -73,15 +72,8 @@ for k = 1:nch
         cov_x{k,n} = conv(tmp_x(:,k).*tmp_x(:,n), Win, 'same');
     end
 end
-opf_r = @(x)cell2mat(x(:)');
-opf_c = @(x)sum(x,2);
-cov_v = opf_c(opf_r(cov_x));
-tmp_x = opf_r(cov_x);
-[~,rids] = sort(rand(size(tmp_x,2),1));
-
-% total variance to garentee line shape, against the dipole structure. 
-ttv_v = sum(abs(diff(tmp_x(:,rids),1,2)),2);
-Xtrain=[ttv_v,cov_v];
+Xtrain = cmp_Xtrain(cov_x);
+% Xtrain=[ttv_v,cov_v];
 
 % cluster with ICA. 
 [A, W] = fastica(Xtrain','verbose','off');
@@ -133,3 +125,16 @@ if isave
     EMG_par.W = W;
     save(sprintf('%s.EMG_Cluster.mat',FileBase), 'EMG_heavy','EMG_thrd','sug_period','EMG_par')
 end
+function Xtrain = cmp_Xtrain(cov_x)
+c_idx = find(triu(ones(size(cov_x))));
+[~,rids] = sort(rand(length(c_idx),1));
+rc_idx = c_idx(rids);
+cov_v = cov_x{c_idx(1)}(:);
+ttv_v = zeros(length(cov_x{1}),1);
+for k = 2:length(c_idx)
+    cov_v = cov_v+cov_x{c_idx(k)}(:);
+    % total variance to garentee line shape, against the dipole structure.
+    % ttv_v = sum(abs(diff(tmp_x(:,rids),1,2)),2);
+    ttv_v = ttv_v+ abs(cov_x{rc_idx(k)}(:) - cov_x{rc_idx(k-1)}(:));
+end
+Xtrain=[ttv_v,cov_v];
