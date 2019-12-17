@@ -161,6 +161,9 @@ fprintf('\nDone\n')
 PYR_Channel = 37;
 EMG_rm_report();% ([],PYR_Channel);
 EMG_rm_viewnoise();% (PYR_Channel,[])
-EMG_rm_viewspec([],[],[],[],nFFT,Winlength);
+if Evts(end)>1.6e7
+    nFFT = 2^8;
+    EMG_rm_viewspec([],[],[],[],nFFT,Winlength);
+end
 
 % EOF
