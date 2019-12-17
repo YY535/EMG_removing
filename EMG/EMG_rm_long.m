@@ -96,9 +96,11 @@ if isempty(armodel)
     armodel = dir('*.WhitenSignal.ARmodel.lfp.mat');
     if isempty(armodel)
         [wx,armodel]=WhitenSignal(x,[],[],[],1);
+        tmp_ar = armodel;
     else
         armodel = load(armodel(1).name);
         wx=WhitenSignal(x,[],[],armodel.ARmodel);
+        tmp_ar = armodel.ARmode;
     end
 elseif isstr(armodel)
     armodel = load(armodel);
