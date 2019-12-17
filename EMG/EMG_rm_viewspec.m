@@ -48,6 +48,7 @@ if isempty(Periods)
     end
     Periods = Periods(usePeriod);
     P_title = P_title(usePeriod);
+    nP = length(Periods);
 elseif ~iscell(Periods)
     tmp = cell(1);
     tmp{1} = Periods;
