@@ -36,11 +36,18 @@ end
 if isempty(Periods)
     a = dir('*.sts.*');
     nP = length(a);
+    usePeriod = true(nP,1);
     Periods = cell(nP,1);
     for k = 1:nP
         Periods{k} = load(a(k).name);
+        if size(Periods{k},2)~= 2
+            Periods{k} = [];
+            usePeriod(k) = false;
+        end
         P_title{k} = a(k).name((find(a(k).name=='.',1,'last')+1):end);
     end
+    Periods = Periods(usePeriod);
+    P_title = P_title(usePeriod);
 elseif ~iscell(Periods)
     tmp = cell(1);
     tmp{1} = Periods;
