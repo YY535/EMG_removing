@@ -1,5 +1,5 @@
 # EMG_removing
-Removing high frequency EMG artifacts from the multichannel extracellular recording with ICA.
+MATLAB toolbox for removing high frequency EMG artifacts from the multichannel extracellular recording with ICA.
 
 This is generally an overcomplete ICA problem since the number of the potential signal sources is much larger than the recording sites. Lower frequency physiological signal is going to affect the separation.
 
