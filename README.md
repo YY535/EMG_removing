@@ -42,5 +42,13 @@ EMG_rm_viewspec()
 % play with the nfft and the window length to compute the spectrum when you have a long file. 
 EMG_rm_viewnoise()
 ```
+For the slower frequency property, e.g., delta wave phase and power, it is recommended to use the original signal `x_orig` The original signal could also be reconstructed by the EMG activities. In case of useing channel `ch_delta` (`x` is the cleaned data):
+
+```
+ch_delta ;% the selected channel
+x_d = x(:,ch_delta);% the cleaned signal
+x_r = AW.As(ch_delta)*EMG_au(:);% the EMG signal
+x_orig = x_d + x_r;
+```
 
 This package is entirely based on matlab codes. Errors please contact: chen at biologie.uni-muenchen.de
