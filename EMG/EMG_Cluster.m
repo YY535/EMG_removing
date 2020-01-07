@@ -94,7 +94,9 @@ sug_period = ceil(linspace(1,nt,nchunks+1));% rough section
 % points.
 
 se = StartEnd1d(~EMG_heavy);
-se(diff(se,1,2)<swin,:) = [];
+se_durations = diff(se,1,2);
+
+se(diff(se,1,2)<min(swin,max(50,prctile(se_durations,50))),:) = [];
 for k  =2:(nchunks-1)
     tmp1 = find(se(:,1)<=sug_period(k),1,'last');
     tmp2 = find(se(:,2)>=sug_period(k),1,'first');
