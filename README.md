@@ -12,7 +12,7 @@ In an early version we use highpassed (>100 Hz) data to find the EMG component. 
 % running the pipeline
 addpath(genpath('/path/to/EMG_removing'))
 cd('/path/to/the/head/dictionary/of/your/sessions')
-denoise_shank = 1;
+denoise_shank = 1;% or [shank1, shank2....]
 EMG_rm_pip([],denoise_shank)
 ```
 
