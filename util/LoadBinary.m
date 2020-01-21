@@ -49,7 +49,7 @@ if ~isobject(FileName)
     
     lastdot =strfind(FileName,'.');
     FileBase=FileName(1:lastdot(end)-1);
-    if (nargin<3 & isempty(varargin)) 
+    if (nargin<3 || isempty(varargin{1})) 
         if (FileExists([FileBase '.xml']) | FileExists([FileBase '.par']))
             Par = LoadPar(FileBase);
             nChannels = Par.nChannels;
