@@ -1,4 +1,4 @@
-function [AW, Power,axs] = EMG_rm_report(varargin)
+function [AW, Power,axs] = EMG_rm_report_ms(varargin)
 % [AW, Power] = EMG_rm_report(FileName,Channels,savedir)
 % report the dynamics of EMG components.
 % Inputs: 
@@ -50,15 +50,20 @@ for kk = 1:nfile
     if isempty(Channels)
         ch = zeros(nshank,1);
         for n = 1:nshank
-            ch(n) = par.AnatGrps(denoise_shank(n)).Channels(fix(end/3*2));
+            ch(n) = par.AnatGrps(denoise_shank(n)).Channels(fix(end/3*2)) - par.AnatGrps(denoise_shank(n)).Channels(1) +1;
         end
     elseif length(Channels)<nshank
         ch = zeros(nshank,1);
         for n = 1:nshank
-            ch(n) = par.AnatGrps(denoise_shank(n)).Channels(Channels);
+            ch(n) = repmat(Channels,nshank,1);% par.AnatGrps(denoise_shank(n)).Channels(Channels);
         end
     else
         ch = Channels;
+        for n  =1:nshank
+            if Channels(n)>par.AnatGrps(denoise_shank(n)).Channels(1)
+                ch(n)=Channels(n)-par.AnatGrps(denoise_shank(n)).Channels(1)+1;
+            end
+        end
     end
     %%
     mlfp = memmapfile(LFPfile,'Format','int16');
