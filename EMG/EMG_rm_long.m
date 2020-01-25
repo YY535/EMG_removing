@@ -185,7 +185,7 @@ switch lower(cmp_method) %
             [Awb, Wwb] = fastica(x(1:down_sample:end,:)', 'verbose','off');% se
             AW.Awb = Awb;
             AW.Wwb = Wwb;
-            if sum(abs(sum(opf_A(Awb)))>nch)>1
+            if sum(abs(sum(opf_A(Awb)))>nch)>0
                 A = Awb;
                 W = Wwb;
                 AW.usewb = true;
@@ -202,7 +202,7 @@ switch lower(cmp_method) %
             [Awb, Wwb] = fastica(x(1:down_sample:end,:)', 'verbose','off');% se
             AW.Awb = Awb;
             AW.Wwb = Wwb;
-            if sum(abs(sum(opf_A(Awb)))>nch)>1
+            if sum(abs(sum(opf_A(Awb)))>nch)>0
                 A = Awb;
                 W = Wwb;
                 AW.usewb = true;
