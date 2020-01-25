@@ -189,6 +189,7 @@ switch lower(cmp_method) %
                 A = Awb;
                 W = Wwb;
                 AW.usewb = true;
+                fprintf('\r Using the wide band.\n')
             end
         end
         AW.Ah = Ah;
@@ -205,6 +206,7 @@ switch lower(cmp_method) %
                 A = Awb;
                 W = Wwb;
                 AW.usewb = true;
+                fprintf('\r Using the wide band.\n')
             end
         end
     otherwise
