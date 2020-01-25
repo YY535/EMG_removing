@@ -181,15 +181,7 @@ switch lower(cmp_method) %
             
             fprintf('\n\n')
         end
-        if sum(abs(sum(opf_A(A)))>nch)<1
-            [Awb, Wwb] = fastica(x(1:down_sample:end,:)', 'verbose','off');% se
-            AW.Awb = Awb;
-            AW.Wwb = Wwb;
-            if sum(abs(sum(opf_A(Awb)))>nch)>1
-                A = Awb;
-                W = Wwb;
-                AW.usewb = true;
-            end
+        if sum(sum(abs(sum(opf_A(A)))>nch)>1)
         end
         AW.Ah = Ah;
         AW.Ax = Ax;
@@ -197,16 +189,6 @@ switch lower(cmp_method) %
         AW.Wx = Wx;
     case 'w' % Use Whiten alone
         [A, W] = fastica(wx(1:down_sample:end,:)', 'numOfIC', numOfIC,'verbose','off');% selectedprd
-        if sum(abs(sum(opf_A(A)))>nch)<1
-            [Awb, Wwb] = fastica(x(1:down_sample:end,:)', 'verbose','off');% se
-            AW.Awb = Awb;
-            AW.Wwb = Wwb;
-            if sum(abs(sum(opf_A(Awb)))>nch)>1
-                A = Awb;
-                W = Wwb;
-                AW.usewb = true;
-            end
-        end
     otherwise
         fprintf('Please using hw or w. ')
 end

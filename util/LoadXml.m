@@ -9,9 +9,6 @@
 % this script is written for xml version 1.1 .. older version doesn't work.
 % additions are welcome
 function [xml, rxml] = LoadXml(FileBase,varargin)
-
-FileBase = ResolvePath(FileBase,0);
-
 xml = struct;
 
 %if xml was in the filebase 
