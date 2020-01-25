@@ -150,7 +150,7 @@ if rm_linenoise
     end
 end
 %% EMG COMPONENTS AND ACTIVITIES
-
+AW.usewb = false;
 % Components from the high frequency.
 switch lower(cmp_method) % 
     case 'hw'
