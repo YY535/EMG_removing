@@ -36,6 +36,7 @@ The cleaned signals will be saved in `.lfpd` files and the EMG activity in `.emg
 ```matlab
 cd('/path/to/your/sessions')
 EMG_rm_view()
+EMG_rm_view([], [t_beginning, t_end]) % to check arbitrary period
 PYR_Channel = 37;% choose the channel to visualize the effect. 
 EMG_rm_report([],PYR_Channel) % or we'll use the channel with the largest ripple power.
 EMG_rm_viewspec()
