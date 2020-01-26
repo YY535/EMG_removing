@@ -42,6 +42,10 @@ function varargout = EMG_rm_long(x, varargin)
 %                   default is the current directory.
 %       save_together: if save ICs from all the chunks together. 
 %                       default: true
+%       use_wb: whether to use the wide band signal when the algorithm
+%               can't find a proper flat component at high frequency band
+%               defualt: true NB: please check the report fig to see if you
+%               really need this! 
 %       
 % Outputs:
 %   x: EMG removed signal.
@@ -66,7 +70,7 @@ function varargout = EMG_rm_long(x, varargin)
 %% COMPLETE VARIABLES
 
 cwd=pwd; %
-[LFPfs, rm_linenoise, line_thrd, high_pass_freq, EMG_thrd, if_rm_mean,armodel,cmp_method,down_sample,numOfIC,isave,save_range,FileName,savedir,save_together] = DefaultArgs(varargin, {1000, true, 2, 100, [], true,[],'hw',3,0,false,[],[],[],true});
+[LFPfs, rm_linenoise, line_thrd, high_pass_freq, EMG_thrd, if_rm_mean,armodel,cmp_method,down_sample,numOfIC,isave,save_range,FileName,savedir,save_together,use_wb] = DefaultArgs(varargin, {1000, true, 2, 100, [], true,[],'hw',3,0,false,[],[],[],true,true});
 [nt, nch] = size(x);
 if nt < nch 
     istr = true;
@@ -185,7 +189,7 @@ switch lower(cmp_method) %
             [Awb, Wwb] = fastica(x(1:down_sample:end,:)', 'verbose','off');% se
             AW.Awb = Awb;
             AW.Wwb = Wwb;
-            if sum(abs(sum(opf_A(Awb)))>nch)>0
+            if sum(abs(sum(opf_A(Awb)))>(nch*.9))>0
                 A = Awb;
                 W = Wwb;
                 AW.usewb = true;
@@ -202,7 +206,7 @@ switch lower(cmp_method) %
             [Awb, Wwb] = fastica(x(1:down_sample:end,:)', 'verbose','off');% se
             AW.Awb = Awb;
             AW.Wwb = Wwb;
-            if sum(abs(sum(opf_A(Awb)))>nch)>0
+            if sum(abs(sum(opf_A(Awb)))>(nch*.9))>0
                 A = Awb;
                 W = Wwb;
                 AW.usewb = true;

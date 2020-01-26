@@ -29,6 +29,11 @@ function EMG_rm_main(FileBase,varargin)
 %           nFFT: nfft to compute spectrum in EMG_rm_viewspec.m
 %           WinLength: length of moving window in EMG_rm_viewspec.m
 %           save_together: if save all the chunks together. defult: true
+%           use_wb: whether to use the wide band signal when the algorithm
+%               can't find a proper flat component at high frequency band
+%               defualt: true NB: please check the report fig to see if you
+%               really need this! 
+
 % 
 % Related functions: 
 % EMG_Cluster.m, EMG_rm_long.m, EMG_rm_pip.m, EMG_rm_viewspec.m, 
@@ -38,7 +43,7 @@ function EMG_rm_main(FileBase,varargin)
 % 
 % Last Modified: 11.12.2019.
 
-[savedir,denoise_shank,cleanEMGch,rm_linenoise,line_thrd, numOfIC, hp_freq,nchunks, cmp_method,down_sample,nFFT, Winlength, save_together] = DefaultArgs(varargin, {pwd,1,[],true,1.8,[], 100,6, 'hw',3, 2^9,[],true});
+[savedir,denoise_shank,cleanEMGch,rm_linenoise,line_thrd, numOfIC, hp_freq,nchunks, cmp_method,down_sample,nFFT, Winlength, save_together,use_wb] = DefaultArgs(varargin, {pwd,1,[],true,1.8,[], 100,6, 'hw',3, 2^9,[],true,true});
 
 if exist([FileBase,'.lfpinterp'],'file')
     LFPfile = [FileBase,'.lfpinterp'];
@@ -138,7 +143,7 @@ for n = 1:nshank
             Fs, rm_linenoise,line_thrd,hp_freq, ...
             EMG_thrd(tmp_Period(1):tmp_Period(2)), true, ...
             armodel, cmp_method, down_sample,numOfIC,...
-            true, save_range, FileBase, savedir, save_together);
+            true, save_range, FileBase, savedir, save_together,use_wb);
     end
 end
 
