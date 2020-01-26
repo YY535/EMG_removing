@@ -31,7 +31,7 @@ function EMG_rm_main(FileBase,varargin)
 %           save_together: if save all the chunks together. defult: true
 %           use_wb: whether to use the wide band signal when the algorithm
 %               can't find a proper flat component at high frequency band
-%               defualt: true NB: please check the report fig to see if you
+%               defualt: false NB: please check the report fig to see if you
 %               really need this! 
 
 % 
@@ -43,7 +43,7 @@ function EMG_rm_main(FileBase,varargin)
 % 
 % Last Modified: 11.12.2019.
 
-[savedir,denoise_shank,cleanEMGch,rm_linenoise,line_thrd, numOfIC, hp_freq,nchunks, cmp_method,down_sample,nFFT, Winlength, save_together,use_wb] = DefaultArgs(varargin, {pwd,1,[],true,1.8,[], 100,6, 'hw',3, 2^9,[],true,true});
+[savedir,denoise_shank,cleanEMGch,rm_linenoise,line_thrd, numOfIC, hp_freq,nchunks, cmp_method,down_sample,nFFT, Winlength, save_together,use_wb] = DefaultArgs(varargin, {pwd,1,[],true,1.8,[], 100,6, 'hw',3, 2^9,[],true,false});
 
 if exist([FileBase,'.lfpinterp'],'file')
     LFPfile = [FileBase,'.lfpinterp'];

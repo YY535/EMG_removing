@@ -70,7 +70,7 @@ function varargout = EMG_rm_long(x, varargin)
 %% COMPLETE VARIABLES
 
 cwd=pwd; %
-[LFPfs, rm_linenoise, line_thrd, high_pass_freq, EMG_thrd, if_rm_mean,armodel,cmp_method,down_sample,numOfIC,isave,save_range,FileName,savedir,save_together,use_wb] = DefaultArgs(varargin, {1000, true, 2, 100, [], true,[],'hw',3,0,false,[],[],[],true,true});
+[LFPfs, rm_linenoise, line_thrd, high_pass_freq, EMG_thrd, if_rm_mean,armodel,cmp_method,down_sample,numOfIC,isave,save_range,FileName,savedir,save_together,use_wb] = DefaultArgs(varargin, {1000, true, 2, 100, [], true,[],'hw',3,0,false,[],[],[],true,false});
 [nt, nch] = size(x);
 if nt < nch 
     istr = true;
@@ -185,7 +185,7 @@ switch lower(cmp_method) %
             
             fprintf('\n\n')
         end
-        if sum(abs(sum(opf_A(A)))>nch)<1
+        if (sum(abs(sum(opf_A(A)))>nch)<1) && use_wb
             [Awb, Wwb] = fastica(x(1:down_sample:end,:)', 'verbose','off');% se
             AW.Awb = Awb;
             AW.Wwb = Wwb;
@@ -202,7 +202,7 @@ switch lower(cmp_method) %
         AW.Wx = Wx;
     case 'w' % Use Whiten alone
         [A, W] = fastica(wx(1:down_sample:end,:)', 'numOfIC', numOfIC,'verbose','off');% selectedprd
-        if sum(abs(sum(opf_A(A)))>nch)<1
+        if (sum(abs(sum(opf_A(A)))>nch)<1) && use_wb
             [Awb, Wwb] = fastica(x(1:down_sample:end,:)', 'verbose','off');% se
             AW.Awb = Awb;
             AW.Wwb = Wwb;
