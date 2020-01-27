@@ -96,8 +96,10 @@ for kk = 1:nfile
             plot(par.AnatGrps(tmp_sh).Channels,opf_nA(AW{k}.A),'Color',[.4 .4 .4])
             hold on
             plot(par.AnatGrps(tmp_sh).Channels,opf_nA(As{k}),'r', 'LineWidth',2)
-            if AW{k}.usewb
-                text(1,0,'wb')
+            if isfield(AW{k},'usewb')
+                if AW{k}.usewb
+                    text(1,0,'wb')
+                end
             end
             axis tight
             axs(k,1).Position([1 3:4]) = set_Position(:,1);
