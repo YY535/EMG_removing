@@ -118,6 +118,9 @@ for ksh = 1:length(denoise_shank)
     else
         ch = Channel;
     end
+    if ch>nch
+        ch = ch-HP(1)+1;
+    end
     %% AVAERAGE CROSS-SPECTRAL DENSITY CROSS STATES
     nclm = 4;
     nrows = nP+3;% ceil(nP/nclm)
