@@ -2,6 +2,7 @@ function EMG_rm_viewspec(varargin)
 % EMG_rm_viewspec(Channel,Periods,savedir,isnorm,nFFT,WinLength,savespec,plot_coh)
 % 
 % view the effect of EMG removal in specragram.
+% This function intends to give you a general view of the effect
 % Inputs: 
 %   Channel: the channels to compare. If not given, will select the one
 %            with the largest ripple band power.
@@ -14,10 +15,6 @@ function EMG_rm_viewspec(varargin)
 %   savespec: if one wants to save the computed spectrum
 %
 % Tips: play with nFFT and WinLength for the long files. 
-%
-% This function intends to give you a general view of the effect, therefore
-% we reduce the number of nFFT when the recording gets longer. Please
-% recompute the spectrum if you want a higher frequency precision. 
 % 
 % Error contact: chen at biologie.uni-muenchen.de
 % 
