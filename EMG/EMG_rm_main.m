@@ -112,7 +112,7 @@ save_range{2} = [par.nChannels, Evts(end)];
 %% DETECTING THE HIGH EMG PRIODS
 if exist([FileBase, '.EMG_Cluster.mat'], 'file')
     load([FileBase, '.EMG_Cluster.mat'],'EMG_thrd', 'sug_period')
-    warning('\n---------------------------------------------\nPlease make sure you removed all the files generated previously when you try to redo the denoising!\n---------------------------------------------\n')
+    fprintf('\n\n--------------------------------------------------\n                   Please!!! \n  Removed all the previously generated files \n     when you try to redo the denoising!\n--------------------------------------------------\n\n')
 else
     swin = 500;
     lwinms = 20;
