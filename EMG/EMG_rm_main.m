@@ -12,7 +12,8 @@ function EMG_rm_main(FileBase,varargin)
 %   FileBase: session name.
 %   Optional:
 %       savedir: path to save the cleaned files.
-%       denoise_shank: the shanks for denoising. defualt: shank number 1
+%       denoise_shank: the shanks for denoising. defualt: shank number 1,
+%                      use [shk_1,...,shk_n] to denoise multiple shanks
 %       cleanEMGch: the channels to detect EMG noise. defualt: 5 sampled in
 %                   the first shank.
 %       rm_linenoise: if remove line noise. default: true
@@ -38,6 +39,9 @@ function EMG_rm_main(FileBase,varargin)
 % Related functions: 
 % EMG_Cluster.m, EMG_rm_long.m, EMG_rm_pip.m, EMG_rm_viewspec.m, 
 % EMG_rm_report.m, EMG_rm_viewnoise.m
+%
+% NB: please make sure you remove all the files generated previously when you
+% try to redo the denoising.
 %
 % Error contact: chen at biologie.uni-muenchen.de
 % 
@@ -108,6 +112,7 @@ save_range{2} = [par.nChannels, Evts(end)];
 %% DETECTING THE HIGH EMG PRIODS
 if exist([FileBase, '.EMG_Cluster.mat'], 'file')
     load([FileBase, '.EMG_Cluster.mat'],'EMG_thrd', 'sug_period')
+    warning('\n---------------------------------------------\nPlease make sure you removed all the files generated previously when you try to redo the denoising!\n---------------------------------------------\n')
 else
     swin = 500;
     lwinms = 20;
