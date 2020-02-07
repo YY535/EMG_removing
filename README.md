@@ -52,4 +52,6 @@ x_r = AW.As(ch_delta)*EMG_au(:);% the EMG signal
 x_orig = x_d + x_r;
 ```
 
+NB: please make sure you've removed all the previously generated denoing files when you try to redo the denoise. 
+
 This package is entirely based on matlab codes. Errors please contact: chen at biologie.uni-muenchen.de
