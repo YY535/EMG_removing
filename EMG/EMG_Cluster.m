@@ -107,7 +107,9 @@ for k  =2:(nchunks-1)
         % when the rough point is not covered by LEP
         sug_period(k) = fix(sum(se(tmp1,:))/2);
     else
-        sug_period(k) = fix(sum(se(tmp2,:))/2);
+        if ~isempty(tmp2)
+            sug_period(k) = fix(sum(se(tmp2,:))/2);
+        end
     end
 end
 sug_period = unique(sug_period);
