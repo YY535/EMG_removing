@@ -111,9 +111,7 @@ for k  =2:(nchunks-1)
     else
         if ~isempty(tmp2)
             sug_period(k) = fix(sum(se(tmp2,:))/2);
-        else
-            tmp2 = find(se_cand(:,2)>=sug_period(k),1,'first');
-            sug_period(k) = fix(sum(se_cand(tmp2,:))/2);
+            el
         end
     end
 end
