@@ -1,4 +1,4 @@
-function [AW, Power,axs] = EMG_rm_report(varargin)
+function [AW, Power,axs] = EMG_rm_report_ms(varargin)
 % [AW, Power] = EMG_rm_report(FileName,Channels,savedir)
 % report the dynamics of EMG components.
 % Inputs: 
@@ -32,7 +32,7 @@ if plot_coh
 else
     TITLE = 'CSD';
 end
-FileBase = FileName{1}(1:(find(FileName{1}=='.',1,'first')-1));
+FileBase = FileName{1}(1:(find((FileName{1}(1:(end-1))=='.') & (FileName{1}(2:end)=='E'),1,'first')-1));
 opf_nA = @(x)bsxfun(@rdivide,x,sqrt(sum(x.^2)));
 opf_A = @(x)(bsxfun(@rdivide,x,SREaffineV(1:size(x,1),x)));
 opf_C = @(x)abs(sum(opf_A(x)));
@@ -96,11 +96,6 @@ for kk = 1:nfile
             plot(par.AnatGrps(tmp_sh).Channels,opf_nA(AW{k}.A),'Color',[.4 .4 .4])
             hold on
             plot(par.AnatGrps(tmp_sh).Channels,opf_nA(As{k}),'r', 'LineWidth',2)
-            if isfield(AW{k},'usewb')
-                if AW{k}.usewb
-                    text(1,0,'wb')
-                end
-            end
             axis tight
             axs(k,1).Position([1 3:4]) = set_Position(:,1);
            

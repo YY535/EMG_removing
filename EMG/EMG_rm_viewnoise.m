@@ -30,7 +30,12 @@ if isempty(Period)
     EMG_Prd = StartEnd1d(EMG_thrd);
     use_prd = find(diff(EMG_Prd,1,2)>200 & EMG_Prd(:,1)>5000,1,'first');
     if isempty(use_prd)
-        use_prd = find(diff(EMG_Prd,1,2)>100 & EMG_Prd(:,1)>5000,1,'first');
+        t_interval = 100;
+        nnn = 0;
+        while (nnn<50) && isempty(use_prd)
+            use_prd = find(diff(EMG_Prd,1,2)>(t_interval*.9^nnn) & EMG_Prd(:,1)>5000,1,'first');
+            nnn=nnn+1;
+        end
     end
     Period = fix(mean(EMG_Prd(use_prd,:))) + [-par.lfpSampleRate  par.lfpSampleRate] ;
 end
