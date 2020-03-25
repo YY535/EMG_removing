@@ -1,6 +1,5 @@
 function EMG_rm_main(FileBase,varargin)
-% EMG_rm_main(FileBases,[savedir,denoise_shank,cleanEMGch,...
-%                        silence_periods,sp_loadingfuns,...
+% EMG_rm_main(FileBases,[savedir,denoise_shank,cleanEMGch,nonSWS,SWSloadingfuns,...
 %                        rm_linenoise,line_thrd, ...
 %                        numOfIC,hp_freq,nchunks, cmp_method,down_sample, ...
 %                        nFFT, Winlength, ...
@@ -17,10 +16,10 @@ function EMG_rm_main(FileBase,varargin)
 %                      use [shk_1,...,shk_n] to denoise multiple shanks
 %       cleanEMGch: the channels to detect EMG noise. defualt: 5 sampled in
 %                   the first shank.
-%       silence_periods: only compute and remove the EMG from non_silence 
-%                       periods, give the periods you don't want to remove 
-%                       anything or their filenames. default: false 
-%       sp_loadingfuns: functions to load the discarded periods. 
+%       discard_periods: only compute and remove the EMG from non_discarded 
+%                       periods, give the periods you don't want or their 
+%                       filenames. default: false 
+%       dp_loadingfuns: functions to load the discarded periods. 
 %       rm_linenoise: if remove line noise. default: true
 %       line_thrd: power ratio between line band and other band. 
 %                  defualt: 1.8, I'm being conservative here.
@@ -52,7 +51,7 @@ function EMG_rm_main(FileBase,varargin)
 % 
 % Last Modified: 11.12.2019.
 
-[savedir,denoise_shank,cleanEMGch,silence_periods,sp_loadingfuns,rm_linenoise,line_thrd, numOfIC, hp_freq,nchunks, cmp_method,down_sample,nFFT, Winlength, save_together,use_wb] = DefaultArgs(varargin, {pwd,1,[],false,[],true,1.8,[], 100,6, 'hw',3, 2^9,[],true,false});
+[savedir,denoise_shank,cleanEMGch,discard_periods,dp_loadingfuns,rm_linenoise,line_thrd, numOfIC, hp_freq,nchunks, cmp_method,down_sample,nFFT, Winlength, save_together,use_wb] = DefaultArgs(varargin, {pwd,1,[],false,[],true,1.8,[], 100,6, 'hw',3, 2^9,[],true,false});
 
 if exist([FileBase,'.lfpinterp'],'file')
     LFPfile = [FileBase,'.lfpinterp'];
@@ -126,20 +125,14 @@ else
     lfp=bsxfun(@minus,lfp,mean(lfp,1));
     
     fprintf('\nDetecting EMG periods...\n')
-    if silence_periods
-        if ischar(silence_periods)
-            included_periods = LoadAwake(silence_periods,Evts(end),sp_loadingfuns);
-        elseif length(silence_periods)<2
-            included_periods = LoadAwake(sprintf('%s.sts.%s', FileBase, 'SWS'),Evts(end),sp_loadingfuns);
-        elseif length(silence_periods)<Evts(end)
-            included_periods = true(Evts(end),1);
-            for k = 1:size(silence_periods,1)
-                included_periods(silence_periods(k,1):silence_periods(k,2)) = false;
-            end
-        else
-            included_periods = ~silence_periods;
+    if discard_periods
+        if ischar(discard_periods)
+            included_periods = LoadAwake(discard_periods,Evts(end),dp_loadingfuns);
+        elseif length(discard_periods)<2
+            included_periods = LoadAwake(sprintf('%s.sts.%s', FileBase, 'SWS'),Evts(end),dp_loadingfuns);
+        elseif length(discard_periods)<Evts(end)
+            
         end
-        silence_periods = true;% a flag
         [EMG_thrd, ~, sug_period,included_periods] = EMG_Cluster_s(lfp,included_periods,hp_freq, Fs, lwinms, nchunks,...
             swin, true, FileBase);
     else
@@ -167,7 +160,6 @@ for n = 1:nshank
         tmp_Period = sug_period(k,:);
         save_range{1} = [tmp_Period;HP(1) HP(end)];
         [~, Ws{k,n}, As{k,n}, EMG_au{k,n}, AW{k,n}, armodel] = EMG_rm_long(LoadBinary(LFPfile,HP,par.nChannels,2,[],[],tmp_Period)',   ...
-            silence_periods,included_periods(tmp_Period(1):tmp_Period(2)),...
             Fs, rm_linenoise,line_thrd,hp_freq, ...
             EMG_thrd(tmp_Period(1):tmp_Period(2)), true, ...
             armodel, cmp_method, down_sample,numOfIC,...

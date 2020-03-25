@@ -257,9 +257,12 @@ if silence_periods
         end
         % for the ends
         if sds(k,2)<(nt-cross_searching_ranges)
-            tmp = [1:cross_searching_ranges]+sds(k,2);
-            [~,id] = FindCrossing(abs(EMG_au(tmp)),1);
-            last_end = tmp(id)+1;
+            [~,id] = FindCrossing(abs(EMG_au([1:cross_searching_ranges]+sds(k,2))),1);
+            EMG_au(1:id) = 0;
+        else
+            tmp = (sds(k,1)-20):sds(k,1);
+            [~,id] = FindCrossing(abs(EMG_au(tmp)),-1);
+            EMG_au(last_end:tmp(id)) = 0;
         end
     end
 end
@@ -356,14 +359,3 @@ if isave
         clear m
     end
 end
-function [val,id] = FindCrossing(x,d)
-if d>0 % finding from the left to the right side
-    id = find(abs(x)<1e-4,1,'first');
-else % from the right to the left side
-    id = find(abs(x)<1e-4,1,'last');
-end
-% if none of them get close enough
-if isempty(id)
-    [~,id] = min(abs(x));
-end
-val = x(id);

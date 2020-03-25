@@ -1,4 +1,4 @@
-function EMG_rm_pip(FileBases,denoise_shank)
+function EMG_rm_pip(FileBases,denoise_shank,varargin)
 % EMG_rm_pip(FileBases,denoise_shank,[rm_linenoise,line_thrd])
 % The pipeline to process all the sessions on the current dictionary. 
 % 
@@ -7,6 +7,10 @@ function EMG_rm_pip(FileBases,denoise_shank)
 %              the current dictionary. 
 %   denoise_shank: the shanks for denoising. [shanks] or a cell define
 %                   which shank to denoise in each session, respectively.
+%       silence_periods: only compute and remove the EMG from non_silence 
+%                       periods, give the periods you don't want to remove 
+%                       anything or their filenames. default: false 
+%       sp_loadingfuns: functions to load the discarded periods. 
 %   Optional:
 %       rm_linenoise: if remove line noise. default: true
 %       line_thrd: power ratio between line band and other band. 
@@ -23,7 +27,7 @@ function EMG_rm_pip(FileBases,denoise_shank)
 % 
 % Last Modified: 12.12.2019.
 
-[rm_linenoise,line_thrd] = DefaultArgs(varargin, {true,1.8});
+[silence_periods,sp_loadingfuns,rm_linenoise,line_thrd] = DefaultArgs(varargin, {0,[],true,1.8});
 
 HeadDir = pwd;
 if isempty(FileBases)||nargin<1
@@ -54,7 +58,7 @@ for k  =1:nSession
     fprintf('\n\nStart denoising %s...\n\n',tmp_session)
     tmp_dir = sprintf('%s/%s', HeadDir,tmp_session);
     cd(tmp_dir)
-    EMG_rm_main(tmp_session,tmp_dir,denoise_shank{k},[],rm_linenoise,line_thrd)
+    EMG_rm_main(tmp_session,tmp_dir,denoise_shank{k},silence_periods,sp_loadingfuns,[],rm_linenoise,line_thrd)
     fprintf('\n\nFinished denoising %s...\n\n',tmp_session)
     cd(HeadDir)
 end
