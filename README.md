@@ -12,8 +12,8 @@ In an early version we use highpassed (>100 Hz) data to find the EMG component. 
 % running the pipeline
 addpath(genpath('/path/to/EMG_removing'))
 cd('/path/to/the/head/dictionary/of/your/sessions')
-denoise_shank = 1;% or [shank1, shank2....], each shank is running separately 
-EMG_rm_pip([],denoise_shank)
+denoise_shanks = 1;% or [shank1, shank2....], each shank is running separately 
+EMG_rm_pip([],denoise_shanks)
 ```
 
 or go to your session and try:
@@ -23,11 +23,11 @@ or go to your session and try:
 addpath(genpath('/path/to/EMG_removing'))
 cd('/path/to/the/session')
 FileBase = session_name;
-denoise_shank = 1;
+denoise_shanks = 1;
 rm_line_noise = true; 
 silence_periods = false;
 sp_loadingfuns = [];% use load
-EMG_rm_main(FileBase,[],silence_periods,sp_loadingfuns,denoise_shank,[],rm_line_noise)
+EMG_rm_main(FileBase,[],silence_periods,sp_loadingfuns,denoise_shanks,[],rm_line_noise)
 ```
 
 - Notice the function `EMG_rm_main.m` or `EMG_rm_long.m` by defualt automatically remove the line noise component. If you don't want to do this, set this parameter to `false`. Sometimes people prefer to remove noise in the awake periods and left sleeping periods unchanged. To do this you would need to give the periods you don't want to touch in `silence_periods`. In this case, if you have any function other than `load` to import the periods, specify it in `sp_loadingfuns` with the function name and remember to add that to your path. 
