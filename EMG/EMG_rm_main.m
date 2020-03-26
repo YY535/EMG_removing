@@ -39,7 +39,8 @@ function EMG_rm_main(FileBase,varargin)
 %               can't find a proper flat component at high frequency band
 %               defualt: false NB: please check the report fig to see if you
 %               really need this! 
-
+%           PeriodLengthLimits:the maximum allowed length of your period.
+%               default: 1e6
 % 
 % Related functions: 
 % EMG_Cluster.m, EMG_rm_long.m, EMG_rm_pip.m, EMG_rm_viewspec.m, 
@@ -52,7 +53,7 @@ function EMG_rm_main(FileBase,varargin)
 % 
 % Last Modified: 11.12.2019.
 
-[savedir,denoise_shank,cleanEMGch,silence_periods,sp_loadingfuns,rm_linenoise,line_thrd, numOfIC, hp_freq,nchunks, cmp_method,down_sample,nFFT, Winlength, save_together,use_wb] = DefaultArgs(varargin, {pwd,1,[],false,[],true,1.8,[], 100,6, 'hw',3, 2^9,[],true,false});
+[savedir,denoise_shank,cleanEMGch,silence_periods,sp_loadingfuns,rm_linenoise,line_thrd, numOfIC, hp_freq,nchunks, cmp_method,down_sample,nFFT, Winlength, save_together,use_wb,PeriodLengthLimits] = DefaultArgs(varargin, {pwd,1,[],false,[],true,1.8,[], 100,6, 'hw',3, 2^9,[],true,false,1e6});
 
 if exist([FileBase,'.lfpinterp'],'file')
     LFPfile = [FileBase,'.lfpinterp'];
@@ -141,7 +142,7 @@ else
         end
         silence_periods = true;% a flag
         [EMG_thrd, ~, sug_period,included_periods] = EMG_Cluster_s(lfp,included_periods,hp_freq, Fs, lwinms, nchunks,...
-            swin, true, FileBase);
+            swin, true, FileBase, PeriodLengthLimits);
     else
         [EMG_thrd, ~, sug_period] = EMG_Cluster(lfp,hp_freq, Fs, lwinms, nchunks,...
             swin, true, FileBase);
