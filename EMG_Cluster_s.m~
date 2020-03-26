@@ -1,7 +1,7 @@
 function [EMG_thrd, EMG_heavy, sug_period,included_periods] = EMG_Cluster_s(x,included_periods, varargin)
 % [EMG_thrd, EMG_heavy] = EMG_Cluster_s(x,included_periods,
 %                                       [hp_freq, lfpSamplingRate, lwinms, nchunks,
-%                                        swin, isave, FileName])
+%                                        swin, isave, FileName, PeriodLengthLimits])
 % function to detect large EMG activity period within the selected periods. 
 % 
 % Inputs: 
@@ -22,6 +22,8 @@ function [EMG_thrd, EMG_heavy, sug_period,included_periods] = EMG_Cluster_s(x,in
 %               given by "Filename".
 %       FileBase: the data is going to be aved in FileBase.EMG_Cluster.mat.
 %                 defualt: current_dictionary_name
+%       PeriodLengthLimits: the maximum allowed length of your period.
+%       default: 1e6
 %                 
 % Outputs: 
 %   EMG_thrd: vector indicates the high EMG periods, used in te EMG removing.
@@ -29,6 +31,7 @@ function [EMG_thrd, EMG_heavy, sug_period,included_periods] = EMG_Cluster_s(x,in
 %           looser than the EMG_thrd. This trace is used to detect the
 %           recommended working periods. 
 %   sug_period: recommened working periods. Determined by the nchunks, nx2.
+%   
 % 
 % This is the perperocessing function of the EMG_rm_long.m to extract EMG
 % activity condensed periods. 
@@ -109,12 +112,14 @@ sug_period = unique(sug_period);
 
 % breaking long periods
 long_periods = find(diff(sug_period)>1e6);
-last_id = length(sug_period);
 for  k =1:length(long_periods)
     tmp_s = sug_period(long_periods(k));
     tmp_e = sug_period(long_periods(k)+1);
-    tmp = fix(linspace(tmp_s, rmp_e, ceil((tmp_e-tmp_s)/1e6)))
+    tmp_nc = ceil((tmp_e-tmp_s)/1e6);
+    tmp = fix(linspace(tmp_s, tmp_e, tmp_nc+1));
+    sug_period = [sug_period, tmp(2:(end-1))];
 end
+sug_period = sort(sug_period);
 % % the midpoints of low EMG long periods (LEP) closest to the rough segment
 % % points.
 % 
