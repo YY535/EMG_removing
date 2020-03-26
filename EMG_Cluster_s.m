@@ -116,6 +116,7 @@ for  k =1:length(long_periods)
     tmp = fix(linspace(tmp_s, tmp_e, tmp_nc+1));
     sug_period = [sug_period, tmp(2:(end-1))];
 end
+sug_period = sort(sug_period);
 % % the midpoints of low EMG long periods (LEP) closest to the rough segment
 % % points.
 % 
