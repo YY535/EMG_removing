@@ -64,5 +64,5 @@ function PeriodsSWS = loadrangefiles(FileName,loadmethods)
 if loadmethods
     eval(sprintf('PeriodsSWS = %s(FileName);',loadmethods));
 else
-    PeriodsSWS = load(FileName, loadmethods);
+    PeriodsSWS = load(FileName);
 end
