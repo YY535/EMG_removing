@@ -1,4 +1,4 @@
-function [EMG_thrd, EMG_heavy, sug_period] = EMG_Cluster_s(x,included_periods, varargin)
+function [EMG_thrd, EMG_heavy, sug_period,included_periods] = EMG_Cluster_s(x,included_periods, varargin)
 % [EMG_thrd, EMG_heavy] = EMG_Cluster_s(x,included_periods,
 %                                       [hp_freq, lfpSamplingRate, lwinms, nchunks,
 %                                        swin, isave, FileName])
@@ -103,39 +103,46 @@ sug_period = ceil(linspace(1,sum(included_periods),nchunks+1));% rough section
 sds = StartEnd1d(included_periods);
 sdses = ones(size(sds,1))*diff(sds,1,2);
 [~,ids]=min(abs(  bsxfun(@minus, sdses,sug_period(2:(end-1)))  ));% closest
-for k = 2:nchunks
-    if sdses(ids(k-1))>sug_period(k)
-sug_period(k) = 
-end
 
-% the midpoints of low EMG long periods (LEP) closest to the rough segment
-% points.
-
-se = StartEnd1d(~EMG_heavy);
-se_cand = se;
-se_durations = diff(se,1,2);
-
-se(diff(se,1,2)<min(swin,max(50,prctile(se_durations,50))),:) = [];
-se_cand(diff(se_cand,1,2)<min(max(swin-10,1),max(20,prctile(se_durations,10))),:) = [];% 20 ms
-for k  =2:(nchunks-1)
-    tmp1 = find(se(:,1)<=sug_period(k),1,'last');
-    tmp2 = find(se(:,2)>=sug_period(k),1,'first');
-    if tmp1==tmp2 
-        % when the rough point is covered by LEP
-        sug_period(k) = fix(sum(se(tmp1,:))/2);
-    elseif abs(sug_period(k)- se(tmp1,2))<abs(sug_period(k)- se(tmp2,1)) 
-        % when the rough point is not covered by LEP
-        sug_period(k) = fix(sum(se(tmp1,:))/2);
-    else
-        if ~isempty(tmp2)
-            sug_period(k) = fix(sum(se(tmp2,:))/2);
-        else
-            tmp2 = find(se_cand(:,2)>=sug_period(k),1,'first');
-            sug_period(k) = fix(sum(se_cand(tmp2,:))/2);
-        end
-    end
-end
+sug_period(2:(end-1)) = sds(ids,2);
 sug_period = unique(sug_period);
+
+% breaking long periods
+long_periods = find(diff(sug_period)>1e6);
+last_id = length(sug_period);
+for  k =1:length(long_periods)
+    tmp_s = sug_period(long_periods(k));
+    tmp_e = sug_period(long_periods(k)+1);
+    tmp = fix(linspace(tmp_s, rmp_e, ceil((tmp_e-tmp_s)/1e6)))
+end
+% % the midpoints of low EMG long periods (LEP) closest to the rough segment
+% % points.
+% 
+% se = StartEnd1d(~EMG_heavy);
+% se_cand = se;
+% se_durations = diff(se,1,2);
+% 
+% se(diff(se,1,2)<min(swin,max(50,prctile(se_durations,50))),:) = [];
+% se_cand(diff(se_cand,1,2)<min(max(swin-10,1),max(20,prctile(se_durations,10))),:) = [];% 20 ms
+% for k  =2:(nchunks-1)
+%     tmp1 = find(se(:,1)<=sug_period(k),1,'last');
+%     tmp2 = find(se(:,2)>=sug_period(k),1,'first');
+%     if tmp1==tmp2 
+%         % when the rough point is covered by LEP
+%         sug_period(k) = fix(sum(se(tmp1,:))/2);
+%     elseif abs(sug_period(k)- se(tmp1,2))<abs(sug_period(k)- se(tmp2,1)) 
+%         % when the rough point is not covered by LEP
+%         sug_period(k) = fix(sum(se(tmp1,:))/2);
+%     else
+%         if ~isempty(tmp2)
+%             sug_period(k) = fix(sum(se(tmp2,:))/2);
+%         else
+%             tmp2 = find(se_cand(:,2)>=sug_period(k),1,'first');
+%             sug_period(k) = fix(sum(se_cand(tmp2,:))/2);
+%         end
+%     end
+% end
+% sug_period = unique(sug_period);
 sug_period = [[1; sug_period(2:(end-1))'+1] [sug_period(2:(end-1))';nt]];
 
 %% SAVE RESULTS
@@ -150,7 +157,7 @@ if isave
     EMG_par.datetime = datetime;
     EMG_par.A = A;
     EMG_par.W = W;
-    save(sprintf('%s.EMG_Cluster.mat',FileBase), 'EMG_heavy','EMG_thrd','sug_period','EMG_par')
+    save(sprintf('%s.EMG_Cluster.mat',FileBase), 'EMG_heavy','EMG_thrd','sug_period','EMG_par','included_periods')
 end
 function Xtrain = cmp_Xtrain(cov_x)
 c_idx = find(triu(ones(size(cov_x))));

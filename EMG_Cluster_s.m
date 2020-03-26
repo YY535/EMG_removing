@@ -105,7 +105,17 @@ sdses = ones(size(sds,1))*diff(sds,1,2);
 [~,ids]=min(abs(  bsxfun(@minus, sdses,sug_period(2:(end-1)))  ));% closest
 
 sug_period(2:(end-1)) = sds(ids,2);
+sug_period = unique(sug_period);
 
+% breaking long periods
+long_periods = find(diff(sug_period)>1e6);
+for  k =1:length(long_periods)
+    tmp_s = sug_period(long_periods(k));
+    tmp_e = sug_period(long_periods(k)+1);
+    tmp_nc = ceil((tmp_e-tmp_s)/1e6);
+    tmp = fix(linspace(tmp_s, rmp_e, +1));
+    sug_period = [sug_period, tmp(2:(end-1))];
+end
 % % the midpoints of low EMG long periods (LEP) closest to the rough segment
 % % points.
 % 
@@ -148,7 +158,7 @@ if isave
     EMG_par.datetime = datetime;
     EMG_par.A = A;
     EMG_par.W = W;
-    save(sprintf('%s.EMG_Cluster.mat',FileBase), 'EMG_heavy','EMG_thrd','sug_period','EMG_par')
+    save(sprintf('%s.EMG_Cluster.mat',FileBase), 'EMG_heavy','EMG_thrd','sug_period','EMG_par','included_periods')
 end
 function Xtrain = cmp_Xtrain(cov_x)
 c_idx = find(triu(ones(size(cov_x))));
