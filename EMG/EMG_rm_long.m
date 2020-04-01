@@ -102,6 +102,10 @@ if ~isempty(savedir)
 end
 selectedprd = EMG_thrd;
 
+%% INITIALIZE the OUTPUTS
+Ws= [];
+As= [];
+EMG_au= zeros(nt,1);
 %% PREPARE DATA
 
 mx = mean(x);
@@ -144,6 +148,7 @@ opf_A = @(x)opf_Aa(opf_a(x));
 % SREaffineV use affine to fit, and compute the variance accordinglty.
 % Accounting for the linear leaking from other areas.  
 %% REMOVE LINE-NOISE
+% note: line noise is still removed for any periods. 
 if rm_linenoise
     [A_rm_line,W_rm_line,A_line,W_line,power_ratio,thrd] = EMG_rm_linenoise(wx,line_thrd,LFPfs);
     AW.A_rm_line = A_rm_line;
@@ -165,7 +170,9 @@ if rm_linenoise
         fprintf('\n Line noise component removed...\n')
     end
 end
+
 %% EMG COMPONENTS AND ACTIVITIES
+if ~isempty(included_periods)
 AW.usewb = false;
 % Components from the high frequency.
 switch lower(cmp_method) % 
@@ -257,10 +264,13 @@ if silence_periods
         end
         % for the ends
         if sds(k,2)<(nt-cross_searching_ranges)
-            tmp = [1:cross_searching_ranges]+sds(k,2);
+            tmp = [0:cross_searching_ranges]+sds(k,2);
             [~,id] = FindCrossing(abs(EMG_au(tmp)),1);
             last_end = tmp(id)+1;
         end
+    end
+    if last_end>1
+        EMG_au(last_end:end) = 0;
     end
 end
 %% SMOOTHING THE ENDS OF EMG TRACES.
@@ -296,7 +306,7 @@ end
 if istr % transpose back. 
     x = x';
 end
-
+end
 %% OUTPUT OR SAVE DATA
 
 if nargout>1
