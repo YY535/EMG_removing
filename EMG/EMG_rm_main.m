@@ -119,6 +119,11 @@ save_range{2} = [par.nChannels, Evts(end)];
 if exist([FileBase, '.EMG_Cluster.mat'], 'file')
     load([FileBase, '.EMG_Cluster.mat'],'EMG_thrd', 'sug_period')
     fprintf('\n\n--------------------------------------------------\n                   Please!!! \n  Remove all the previously generated files \n     when you try to redo the denoising!\n--------------------------------------------------\n\n')
+    if silence_periods
+        load([FileBase, '.EMG_Cluster.mat'],'included_periods')
+    else
+        included_periods=[];
+    end
 else
     swin = 500;
     lwinms = 20;
@@ -128,16 +133,16 @@ else
     
     fprintf('\nDetecting EMG periods...\n')
     if silence_periods
-        if ischar(silence_periods)
+        if ischar(silence_periods) % load from files
             included_periods = LoadAwake(silence_periods,Evts(end),sp_loadingfuns);
-        elseif length(silence_periods)<2
+        elseif length(silence_periods)<2 && silence_periods % if true load from files
             included_periods = LoadAwake(sprintf('%s.sts.%s', FileBase, 'SWS'),Evts(end),sp_loadingfuns);
-        elseif length(silence_periods)<Evts(end)
+        elseif length(silence_periods)<Evts(end) % given periods
             included_periods = true(Evts(end),1);
             for k = 1:size(silence_periods,1)
                 included_periods(silence_periods(k,1):silence_periods(k,2)) = false;
             end
-        else
+        else % binary sample mask
             included_periods = ~silence_periods;
         end
         silence_periods = true;% a flag
@@ -146,6 +151,8 @@ else
     else
         [EMG_thrd, ~, sug_period] = EMG_Cluster(lfp,hp_freq, Fs, lwinms, nchunks,...
             swin, true, FileBase);
+        silence_periods = false;
+        included_periods = [];
     end
     clear lfp
 end
@@ -167,8 +174,13 @@ for n = 1:nshank
         fprintf('\rshank%d, period%d in %d...', n, k, nPeriod)
         tmp_Period = sug_period(k,:);
         save_range{1} = [tmp_Period;HP(1) HP(end)];
+        if ~isempty(included_periods)
+            tmp_included_periods=included_periods(tmp_Period(1):tmp_Period(2));
+        else
+            tmp_included_periods=[];
+        end
         [~, Ws{k,n}, As{k,n}, EMG_au{k,n}, AW{k,n}, armodel] = EMG_rm_long(LoadBinary(LFPfile,HP,par.nChannels,2,[],[],tmp_Period)',   ...
-            silence_periods,included_periods(tmp_Period(1):tmp_Period(2)),...
+            silence_periods,tmp_included_periods,...
             Fs, rm_linenoise,line_thrd,hp_freq, ...
             EMG_thrd(tmp_Period(1):tmp_Period(2)), true, ...
             armodel, cmp_method, down_sample,numOfIC,...
