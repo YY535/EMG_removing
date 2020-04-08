@@ -118,6 +118,13 @@ for k  =2:(nchunks-1)
     end
 end
 sug_period = unique(sug_period);
+
+% DISCARD SHORT PERIODS
+short_period_threshold = 20;
+while sum(diff(sug_period)<(short_period_threshold*lfpSamplingRate))
+    sug_period(find(diff(sug_period)<(short_period_threshold*lfpSamplingRate))+1)=[];
+end
+
 sug_period = [[1; sug_period(2:(end-1))'+1] [sug_period(2:(end-1))';nt]];
 
 %% SAVE RESULTS

@@ -120,6 +120,12 @@ for  k =1:length(long_periods)
     sug_period = [sug_period, tmp(2:(end-1))];
 end
 sug_period = sort(sug_period);
+
+% DISCARD SHORT PERIODS
+short_period_threshold = 20;
+while sum(diff(sug_period)<(short_period_threshold*lfpSamplingRate))
+    sug_period(find(diff(sug_period)<(short_period_threshold*lfpSamplingRate))+1)=[];
+end
 % % the midpoints of low EMG long periods (LEP) closest to the rough segment
 % % points.
 % 

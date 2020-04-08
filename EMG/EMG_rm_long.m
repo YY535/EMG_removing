@@ -20,8 +20,8 @@ function varargout = EMG_rm_long(x, varargin)
 %                  defualt: 1.8, I'm being conservative here.
 %       high_pass_freq: beginning of frequency to detect the muscle tone
 %                       default: 100 Hz.
-%       EMG_thrd: the thresholded data of the high EMG periods. Precomputed
-%       by the function of EMG_Cluster.m.
+%       EMG_thrd: the thresholded (binary) data of the high EMG periods. 
+%               Precomputed by the function of EMG_Cluster.m.
 %       if_rm_mean: if return the decenterized signal, default: true.
 %       armodel: the armodel or the name of the armodel file. if not given,
 %               we woud use whiten signal to compute a corresponding
@@ -172,7 +172,7 @@ if rm_linenoise
 end
 
 %% EMG COMPONENTS AND ACTIVITIES
-if ~isempty(included_periods)
+if sum(selectedprd)
 AW.usewb = false;
 % Components from the high frequency.
 switch lower(cmp_method) % 
