@@ -163,20 +163,20 @@ for kk = 1:nfile
                 axs(k,4).Position([1 3:4]) = set_Position(:,4);
             end
             
-            if EMG_REMOVED
             % Coherence of the EMG component vs original/denoised data
             axs(k,5) = subplot(nchunk,nclm,5+nclm*(k-1));
             if k ==1 || isempty(find(set_Position(:,5), 1))
                 set_Position(:,5) = axs(1,5).Position([1 3:4]);
             end
-            if plot_coh
-                plot(fo,abs(sq([yo(:,1,2)./sqrt(yo(:,1,1).*yo(:,2,2)),yo(:,1,3)./sqrt(yo(:,1,1).*yo(:,3,3)),yo(:,2,3)./sqrt(yo(:,2,2).*yo(:,3,3))])))
-            else
-                plot(fo,abs(sq([yo(:,1,2),yo(:,1,3),yo(:,2,3)])))
-            end
-            axis tight
-            Power{n}(:,:,k) = sq(yo(:,[1 5 9 4 7]));
-            axs(k,5).Position([1 3:4]) = set_Position(:,5); 
+            if EMG_REMOVED
+                if plot_coh
+                    plot(fo,abs(sq([yo(:,1,2)./sqrt(yo(:,1,1).*yo(:,2,2)),yo(:,1,3)./sqrt(yo(:,1,1).*yo(:,3,3)),yo(:,2,3)./sqrt(yo(:,2,2).*yo(:,3,3))])))
+                else
+                    plot(fo,abs(sq([yo(:,1,2),yo(:,1,3),yo(:,2,3)])))
+                end
+                axis tight
+                Power{n}(:,:,k) = sq(yo(:,[1 5 9 4 7]));
+                axs(k,5).Position([1 3:4]) = set_Position(:,5);
             end
             
             % LINE NOISE
