@@ -96,36 +96,39 @@ for kk = 1:nfile
                 EMG_REMOVED = false;
             end
             % Ploting the Components profile 
-            if EMG_REMOVED
             axs(k,1) = subplot(nchunk,nclm,1+nclm*(k-1));
             if k ==1 || isempty(find(set_Position(:,1), 1))
                 set_Position(:,1) = axs(1,1).Position([1 3:4]);
             end
-            plot(par.AnatGrps(tmp_sh).Channels,opf_nA(AW{k}.A),'Color',[.4 .4 .4])
-            hold on
-            plot(par.AnatGrps(tmp_sh).Channels,opf_nA(As{k}),'r', 'LineWidth',2)
-            axis tight
-            axs(k,1).Position([1 3:4]) = set_Position(:,1);
+            if EMG_REMOVED
+                plot(par.AnatGrps(tmp_sh).Channels,opf_nA(AW{k}.A),'Color',[.4 .4 .4])
+                hold on
+                plot(par.AnatGrps(tmp_sh).Channels,opf_nA(As{k}),'r', 'LineWidth',2)
+                axis tight
+                axs(k,1).Position([1 3:4]) = set_Position(:,1);
+            end
            
             % Ploting the Components Flatness 
             axs(k,2) = subplot(nchunk,nclm,2+nclm*(k-1));
             if k ==1 || isempty(find(set_Position(:,2), 1))
                 set_Position(:,2) = axs(1,2).Position([1 3:4]);
             end
-            tmp_c = opf_C(AW{k}.A);
-            [~, EMG_comp] = max(tmp_c);
-            AW{k}.flatness = tmp_c;
-            boxplot(axs(k,2),tmp_c);
-            hold on
-            plot(tmp_c(EMG_comp),'ro')
-            axs(k,2).Position([1 3:4]) = set_Position(:,2);
-            axs(k,2).Position(2) = axs(k,1).Position(2);
-            
+            if EMG_REMOVED
+                tmp_c = opf_C(AW{k}.A);
+                [~, EMG_comp] = max(tmp_c);
+                AW{k}.flatness = tmp_c;
+                boxplot(axs(k,2),tmp_c);
+                hold on
+                plot(tmp_c(EMG_comp),'ro')
+                axs(k,2).Position([1 3:4]) = set_Position(:,2);
+                axs(k,2).Position(2) = axs(k,1).Position(2);
+            end
             % Compare the High frequency power propotion in selected periods
             axs(k,3) = subplot(nchunk,nclm,3+nclm*(k-1));
             if k ==1 || isempty(find(set_Position(:,3), 1))
                 set_Position(:,3) = axs(1,3).Position([1 3:4]);
             end
+            if EMG_REMOVED
             hx = log(abs(hilbert(ButFilter(EMG_au{k},4,EMG_par.hp_freq/(EMG_par.lfpSamplingRate/2),'high'))));
             [h1, b1] = hist(hx(EMG_thrd(sug_period(k,1):sug_period(k,2))),100);
             [h2, b2] = hist(hx(~EMG_thrd(sug_period(k,1):sug_period(k,2))),100);
