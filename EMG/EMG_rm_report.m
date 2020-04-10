@@ -206,7 +206,11 @@ for kk = 1:nfile
                 end
             end
             axs(k,7).Position([1 3:4]) = set_Position(:,7);
-            axs(k,7).Position(2) = axs(k,1).Position(2);
+            if EMG_REMOVED
+                axs(k,7).Position(2) = axs(k,1).Position(2);
+            else
+                axs(k,7).Position(2) = axs(k,6).Position(2);
+            end
             
         end
         % subplot(nchunk,nclm,1)
