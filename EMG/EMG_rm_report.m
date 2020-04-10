@@ -85,6 +85,7 @@ for kk = 1:nfile
     %%
     % spatial criteria
     set_Position = [];% clear the ploting framwork for a new plot.
+    FIRST_REMOVED_CHUNK = 0;
     for n=1:nshank
         tmp_sh = denoise_shank(n);
         nshk = figure;% (1);clf
@@ -92,6 +93,9 @@ for kk = 1:nfile
         for k = 1:nchunk
             if isfield('A',AW{k})
                 EMG_REMOVED = true;
+                if ~FIRST_REMOVED_CHUNK
+                    FIRST_REMOVED_CHUNK = k;
+                end
             else
                 EMG_REMOVED = false;
             end
@@ -228,18 +232,26 @@ for kk = 1:nfile
         % subplot(nchunk,nclm,3)
         subplot(axs(1,3))
         title('log(high frq power)')
-        ll = legend('higher EMG','otherwise');
-        ll.Location = 'best';
         % subplot(nchunk,nclm,4)
         subplot(axs(1,4))
         title('Spectrum')
-        ll = legend('EMG','raw','clean');
-        ll.Location = 'best';
+        
         % subplot(nchunk,nclm,5)
         subplot(axs(1,5))
         title(TITLE)
+        
+        % legends
+        if FIRST_REMOVED_CHUNK
+        subplot(axs(FIRST_REMOVED_CHUNK,3))
+        ll = legend('higher EMG','otherwise');
+        ll.Location = 'best';
+        subplot(axs(FIRST_REMOVED_CHUNK,4))
+        ll = legend('EMG','raw','clean');
+        ll.Location = 'best';
+        subplot(axs(FIRST_REMOVED_CHUNK,5))
         ll = legend('EMG-raw','EMG-clean','raw-clean');
         ll.Location = 'best';
+        end
         subplot(axs(1,6))
         title('LineNoiseComp')
         subplot(axs(1,7))
