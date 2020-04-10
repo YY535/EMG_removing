@@ -20,8 +20,8 @@ function varargout = EMG_rm_long(x, varargin)
 %                  defualt: 1.8, I'm being conservative here.
 %       high_pass_freq: beginning of frequency to detect the muscle tone
 %                       default: 100 Hz.
-%       EMG_thrd: the thresholded data of the high EMG periods. Precomputed
-%       by the function of EMG_Cluster.m.
+%       EMG_thrd: the thresholded (binary) data of the high EMG periods. 
+%               Precomputed by the function of EMG_Cluster.m.
 %       if_rm_mean: if return the decenterized signal, default: true.
 %       armodel: the armodel or the name of the armodel file. if not given,
 %               we woud use whiten signal to compute a corresponding
@@ -106,7 +106,6 @@ selectedprd = EMG_thrd;
 Ws= [];
 As= [];
 EMG_au= zeros(nt,1);
-AW= [];
 %% PREPARE DATA
 
 mx = mean(x);
@@ -140,7 +139,6 @@ else
         tmp_ar = armodel;
     end
 end
-clear AW
 AW.armodel = tmp_ar;
 % opf_A = @(x)(bsxfun(@rdivide,x,std(x)));
 chmap = 1:nch;
@@ -150,6 +148,7 @@ opf_A = @(x)opf_Aa(opf_a(x));
 % SREaffineV use affine to fit, and compute the variance accordinglty.
 % Accounting for the linear leaking from other areas.  
 %% REMOVE LINE-NOISE
+% note: line noise is still removed for any periods. 
 if rm_linenoise
     [A_rm_line,W_rm_line,A_line,W_line,power_ratio,thrd] = EMG_rm_linenoise(wx,line_thrd,LFPfs);
     AW.A_rm_line = A_rm_line;
@@ -171,7 +170,9 @@ if rm_linenoise
         fprintf('\n Line noise component removed...\n')
     end
 end
+
 %% EMG COMPONENTS AND ACTIVITIES
+if sum(selectedprd)
 AW.usewb = false;
 % Components from the high frequency.
 switch lower(cmp_method) % 
@@ -302,7 +303,7 @@ x = x - EMG_au*As';% (:,end)
 if ~if_rm_mean
     x = bsxfun(@plus, x, mx);
 end
-if istr % transpose back. 
+if istr % transpose back.
     x = x';
 end
 end

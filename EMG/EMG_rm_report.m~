@@ -1,4 +1,4 @@
-function [AW, Power,axs] = EMG_rm_report(varargin)
+function [AW, Power,axs] = EMG_rm_report_ms(varargin)
 % [AW, Power] = EMG_rm_report(FileName,Channels,savedir)
 % report the dynamics of EMG components.
 % Inputs: 
