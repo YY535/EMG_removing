@@ -91,7 +91,7 @@ for kk = 1:nfile
         nshk = figure;% (1);clf
         
         for k = 1:nchunk
-            if isfield('A',AW{k})
+            if isfield(AW{k},'A')
                 EMG_REMOVED = true;
                 if ~FIRST_REMOVED_CHUNK
                     FIRST_REMOVED_CHUNK = k;
