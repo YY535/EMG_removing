@@ -79,7 +79,7 @@ for ksh = 1:length(denoise_shank)
         load(sprintf('%s/%s.sh.%d.EMG_Spec.mat',savedir,FileBase,tmp_shank), 'y2','f','t')
     else
         y2 = cell(nch,1);
-        emg = memmapfile([FileBase, '.emg'],'Format',{'int16',[1 data_range(2)],'x'});
+        emg = memmapfile([FileBase, '.sh', num2str(tmp_shank),'.emg'],'Format',{'int16',[1 data_range(2)],'x'});
         EMG = double(emg.Data.x);
         EMG = EMG(:) - mean(EMG);
         EMG=WhitenSignal(EMG,[],[],AW{1}.armodel);

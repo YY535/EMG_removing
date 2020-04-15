@@ -43,7 +43,6 @@ nsh = length(denoise_shank);
 
 mlfp = memmapfile(LFPfile,'Format',{'int16',data_range,'x'});
 m = memmapfile([FileBase, '.lfpd'],'Format',{'int16',data_range,'x'});
-emg = memmapfile([FileBase, '.emg'],'Format',{'int16',[1 data_range(2)],'x'});
 if useT
     Xtitle = 'time (s)';
 else
@@ -54,6 +53,12 @@ end
 for  ksh = 1:nsh
     nsh = figure;
     tmp_shank = denoise_shank(ksh);
+    try
+        emg = memmapfile([FileBase, '.sh',num2str(tmp_shank),'.emg'],'Format',{'int16',[1 data_range(2)],'x'});
+    catch
+        emg = memmapfile([FileBase, '.emg'],'Format',{'int16',[1 data_range(2)],'x'});
+    end
+    
     HP = par.AnatGrps(tmp_shank).Channels-par.AnatGrps(1).Channels(1)+1;
     
     opf1 = @(x)(bsxfun(@plus,x,-HP(:)'));
