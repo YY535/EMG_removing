@@ -1,12 +1,14 @@
 function EMG_au_rescale(varargin)
-% to fix the rescaling problem
+% to fix the rescaling problem. 
+% please go to the directory and run the function.
 % inputs: 
 %   savedir: the directory that one is gonna save the data. the default is
-%           the current directory. 
-%   EMG_rm_file
+%            the current directory. 
+%   EMG_rm_file: e.g., 'FileBase.EMG_rm.sh*.mat'
+% 
+
 owd = pwd;
-[savedir,EMG_rm_file] = ...
-    DefaultArgs(varargin, {[],[]});
+[savedir,EMG_rm_file] = DefaultArgs(varargin, {[],[]});
 
 if ~isempty(savedir)
     cd(savedir)
@@ -58,7 +60,7 @@ for k = 1:nfiles
     end
     
     save(EMG_rm_file, 'Ws','As','AW','EMG_au','armodel','sug_period','par','denoise_shank','LFPfile',...
-        'scaling_factor','EMGFileName')
+        'scaling_factor','EMGFileName','savedir')
     
     fprintf('\n %s fixed',EMG_rm_file)
 end
