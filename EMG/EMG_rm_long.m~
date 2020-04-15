@@ -4,7 +4,9 @@ function varargout = EMG_rm_long(x, varargin)
 %                                       SamplingRate, 
 %                                       high_pass_freq, EMG_thrd, if_rm_mean, 
 %                                       armodel, cmp_method, down_sample,
-%                                       isave, save_range, FileName, savedir])
+%                                       isave, save_range, FileName, savedir,
+%                                       save_together,use_wb,
+%                                       EMG_shank,EMG_channel,par])
 % function to remove the EMG noise in a long period. 
 % EMG detected by high frequency (>high_pass_freq) correlated activity
 % among channels. 
@@ -51,6 +53,9 @@ function varargout = EMG_rm_long(x, varargin)
 %               can't find a proper flat component at high frequency band
 %               defualt: true NB: please check the report fig to see if you
 %               really need this! 
+%       EMG_shank: the shank currently used. 0: no shank number is given
+%       EMG_channel: the channel to show the EMG signal. 
+%       par
 %       
 % Outputs:
 %   x: EMG removed signal.
@@ -75,8 +80,8 @@ function varargout = EMG_rm_long(x, varargin)
 %% COMPLETE VARIABLES
 
 cwd=pwd; %
-[silence_periods, included_periods, LFPfs, rm_linenoise, line_thrd, high_pass_freq, EMG_thrd, if_rm_mean,armodel,cmp_method,down_sample,numOfIC,isave,save_range,FileName,savedir,save_together,use_wb] = ...
-    DefaultArgs(varargin, {false, [], 1000, true, 2, 100, [], true,[],'hw',3,0,false,[],[],[],true,false});
+[silence_periods, included_periods, LFPfs, rm_linenoise, line_thrd, high_pass_freq, EMG_thrd, if_rm_mean,armodel,cmp_method,down_sample,numOfIC,isave,save_range,FileName,savedir,save_together,use_wb,EMG_shank,EMG_channel,par] = ...
+    DefaultArgs(varargin, {false, [], 1000, true, 2, 100, [], true,[],'hw',3,0,false,[],[],[],true,false,0,[],[]});
 [nt, nch] = size(x);
 if isempty(included_periods)
     included_periods = 1:nt;
@@ -103,8 +108,8 @@ end
 selectedprd = EMG_thrd;
 
 %% INITIALIZE the OUTPUTS
-Ws= [];
-As= [];
+Ws= zeros(1,nch);
+As= zeros(nch,1);
 EMG_au= zeros(nt,1);
 %% PREPARE DATA
 
@@ -173,139 +178,139 @@ end
 
 %% EMG COMPONENTS AND ACTIVITIES
 if sum(selectedprd)
-AW.usewb = false;
-% Components from the high frequency.
-switch lower(cmp_method) % 
-    case 'hw'
-        hx = ButFilter(x,4,high_pass_freq/(LFPfs/2),'high');
-        [Ah, Wh] = fastica(hx(selectedprd,:)', 'numOfIC', numOfIC,'verbose','off');
-        % [~, EMG_comp] = max(abs(sum(opf_A(Ah))));
-        [~,rod] = sort(abs(sum(opf_A(Ah))),'descend');
-        % EMG_au(:,1) = (x*Wh(EMG_comp,:)');
-        % Components from all over
-        
-        [Ax, Wx] = fastica(Wh(rod,:)*wx(included_periods(1:down_sample:end),:)','verbose','off');
-        
-        A = Ah(:,rod)*Ax;
-        W = Wx*Wh(rod,:);
-        if (sum(abs(sum(opf_A(A)))>nch)>1) || sum(abs(sum(opf_A(A)))>(2*nch))<1
-            fprintf('recompute...\n')
-            wx=WhitenSignal(wx,[],[],tmp_ar);
-            nn = 1;
-            while  ((sum(abs(sum(opf_A(A)))>nch)>1) || sum(abs(sum(opf_A(A)))>(2*nch))<1)&&(nn<5)
-                % too many flat components.
-                if ((sum(abs(sum(opf_A(Ah)))>nch)>1) || sum(abs(sum(opf_A(Ah)))>(2*nch))<1)
-                    [Ah, Wh] = fastica(hx(selectedprd,:)','verbose','off'); % 'numOfIC', numOfIC,
-                end
-                [Ax, Wx] = fastica(Wh*wx(included_periods(nn:down_sample:end),:)','verbose','off');
-                A = Ah*Ax;
-                W = Wx*Wh;
-                nn = nn+1;
-                fprintf('\r%d in %d...\n',nn,5)
-            end
+    AW.usewb = false;
+    % Components from the high frequency.
+    switch lower(cmp_method) %
+        case 'hw'
+            hx = ButFilter(x,4,high_pass_freq/(LFPfs/2),'high');
+            [Ah, Wh] = fastica(hx(selectedprd,:)', 'numOfIC', numOfIC,'verbose','off');
+            % [~, EMG_comp] = max(abs(sum(opf_A(Ah))));
+            [~,rod] = sort(abs(sum(opf_A(Ah))),'descend');
+            % EMG_au(:,1) = (x*Wh(EMG_comp,:)');
+            % Components from all over
             
-            fprintf('\n\n')
-        end
-        if (sum(abs(sum(opf_A(A)))>nch)<1) && use_wb
-            [Awb, Wwb] = fastica(x(included_periods(1:down_sample:end),:)', 'verbose','off');% se
-            AW.Awb = Awb;
-            AW.Wwb = Wwb;
-            if sum(abs(sum(opf_A(Awb)))>(nch*.9))>0
-                A = Awb;
-                W = Wwb;
-                AW.usewb = true;
-                fprintf('\r Using the non-whitened data.\n')
+            [Ax, Wx] = fastica(Wh(rod,:)*wx(included_periods(1:down_sample:end),:)','verbose','off');
+            
+            A = Ah(:,rod)*Ax;
+            W = Wx*Wh(rod,:);
+            if (sum(abs(sum(opf_A(A)))>nch)>1) || sum(abs(sum(opf_A(A)))>(2*nch))<1
+                fprintf('recompute...\n')
+                wx=WhitenSignal(wx,[],[],tmp_ar);
+                nn = 1;
+                while  ((sum(abs(sum(opf_A(A)))>nch)>1) || sum(abs(sum(opf_A(A)))>(2*nch))<1)&&(nn<5)
+                    % too many flat components.
+                    if ((sum(abs(sum(opf_A(Ah)))>nch)>1) || sum(abs(sum(opf_A(Ah)))>(2*nch))<1)
+                        [Ah, Wh] = fastica(hx(selectedprd,:)','verbose','off'); % 'numOfIC', numOfIC,
+                    end
+                    [Ax, Wx] = fastica(Wh*wx(included_periods(nn:down_sample:end),:)','verbose','off');
+                    A = Ah*Ax;
+                    W = Wx*Wh;
+                    nn = nn+1;
+                    fprintf('\r%d in %d...\n',nn,5)
+                end
+                
+                fprintf('\n\n')
+            end
+            if (sum(abs(sum(opf_A(A)))>nch)<1) && use_wb
+                [Awb, Wwb] = fastica(x(included_periods(1:down_sample:end),:)', 'verbose','off');% se
+                AW.Awb = Awb;
+                AW.Wwb = Wwb;
+                if sum(abs(sum(opf_A(Awb)))>(nch*.9))>0
+                    A = Awb;
+                    W = Wwb;
+                    AW.usewb = true;
+                    fprintf('\r Using the non-whitened data.\n')
+                end
+            end
+            AW.Ah = Ah;
+            AW.Ax = Ax;
+            AW.Wh = Wh;
+            AW.Wx = Wx;
+        case 'w' % Use Whiten alone
+            [A, W] = fastica(wx(included_periods(1:down_sample:end),:)', 'numOfIC', numOfIC,'verbose','off');% selectedprd
+            if (sum(abs(sum(opf_A(A)))>nch)<1) && use_wb
+                [Awb, Wwb] = fastica(x(included_periods(1:down_sample:end),:)', 'verbose','off');% se
+                AW.Awb = Awb;
+                AW.Wwb = Wwb;
+                if sum(abs(sum(opf_A(Awb)))>(nch*.9))>0
+                    A = Awb;
+                    W = Wwb;
+                    AW.usewb = true;
+                    fprintf('\r Using the non-whitened data.\n')
+                end
+            end
+        otherwise
+            fprintf('Please using hw or w. ')
+    end
+    
+    [~, EMG_comp] = max(abs(sum(opf_A(A))));
+    As = A(:,EMG_comp);
+    Ws = W(EMG_comp,:);
+    EMG_au = (x*Ws');%.*selectedprd;
+    % (:,n) is to see the behavior of the highpassed resulted EMG.
+    % not need in the final varsion.
+    
+    AW.A = A;
+    AW.W = W;
+    
+    %% SMOOTHING THE BOUNDRIES OF SILENCED PERIODS.
+    cross_searching_ranges = 50;
+    if silence_periods
+        last_end = 1;
+        for k = 1:size(sds,1)
+            % for the starting points
+            if sds(k,1)<cross_searching_ranges
+                [~,id] = FindCrossing(abs(EMG_au(1:cross_searching_ranges)),1);
+                EMG_au(1:id) = 0;
+            else
+                tmp = (sds(k,1)-cross_searching_ranges):sds(k,1);
+                [~,id] = FindCrossing(abs(EMG_au(tmp)),-1);
+                EMG_au(last_end:tmp(id)) = 0;
+            end
+            % for the ends
+            if sds(k,2)<(nt-cross_searching_ranges)
+                tmp = [0:cross_searching_ranges]+sds(k,2);
+                [~,id] = FindCrossing(abs(EMG_au(tmp)),1);
+                last_end = tmp(id)+1;
             end
         end
-        AW.Ah = Ah;
-        AW.Ax = Ax;
-        AW.Wh = Wh;
-        AW.Wx = Wx;
-    case 'w' % Use Whiten alone
-        [A, W] = fastica(wx(included_periods(1:down_sample:end),:)', 'numOfIC', numOfIC,'verbose','off');% selectedprd
-        if (sum(abs(sum(opf_A(A)))>nch)<1) && use_wb
-            [Awb, Wwb] = fastica(x(included_periods(1:down_sample:end),:)', 'verbose','off');% se
-            AW.Awb = Awb;
-            AW.Wwb = Wwb;
-            if sum(abs(sum(opf_A(Awb)))>(nch*.9))>0
-                A = Awb;
-                W = Wwb;
-                AW.usewb = true;
-                fprintf('\r Using the non-whitened data.\n')
-            end
-        end
-    otherwise
-        fprintf('Please using hw or w. ')
-end
-
-[~, EMG_comp] = max(abs(sum(opf_A(A))));
-As = A(:,EMG_comp);
-Ws = W(EMG_comp,:);
-EMG_au = (x*Ws');%.*selectedprd; 
-% (:,n) is to see the behavior of the highpassed resulted EMG.
-% not need in the final varsion. 
-
-AW.A = A;
-AW.W = W;
-
-%% SMOOTHING THE BOUNDRIES OF SILENCED PERIODS.
-cross_searching_ranges = 50;
-if silence_periods
-    last_end = 1;
-    for k = 1:size(sds,1)
-        % for the starting points
-        if sds(k,1)<cross_searching_ranges
-            [~,id] = FindCrossing(abs(EMG_au(1:cross_searching_ranges)),1);
-            EMG_au(1:id) = 0;
-        else
-            tmp = (sds(k,1)-cross_searching_ranges):sds(k,1);
-            [~,id] = FindCrossing(abs(EMG_au(tmp)),-1);
-            EMG_au(last_end:tmp(id)) = 0;
-        end
-        % for the ends
-        if sds(k,2)<(nt-cross_searching_ranges)
-            tmp = [0:cross_searching_ranges]+sds(k,2);
-            [~,id] = FindCrossing(abs(EMG_au(tmp)),1);
-            last_end = tmp(id)+1;
+        if last_end>1
+            EMG_au(last_end:end) = 0;
         end
     end
-    if last_end>1
-        EMG_au(last_end:end) = 0;
+    %% SMOOTHING THE ENDS OF EMG TRACES.
+    
+    % first_cross
+    if abs(EMG_au(1))<(median(abs(EMG_au))*1e-3)
+        first_cross = 1;
+    else
+        first_cross = find(sign(EMG_au(1:(end-1)).*EMG_au(2:end))<0,1,'first');
     end
-end
-%% SMOOTHING THE ENDS OF EMG TRACES.
-
-% first_cross
-if abs(EMG_au(1))<(median(abs(EMG_au))*1e-3)
-    first_cross = 1;
-else
-    first_cross = find(sign(EMG_au(1:(end-1)).*EMG_au(2:end))<0,1,'first');
-end
-if first_cross>1250
-    first_cross = find(EMG_au<=(median(abs(EMG_au))*1e-2),1,'first');
-end
-EMG_au(1:first_cross)=0;
-AW.zero_first = first_cross;% zeros line at first.
-
-% last_cross
-if abs(EMG_au(end))<(median(abs(EMG_au))*1e-3)
-    last_cross = nt;
-else
-    last_cross = find(sign(EMG_au(1:(end-1)).*EMG_au(2:end))<0,1,'last');
-end
-if (nt-last_cross)>1250
-    last_cross = find(EMG_au<=(median(abs(EMG_au))*1e-2),1,'last');
-end
-EMG_au((last_cross+1):end)=0;
-AW.zero_last = nt - last_cross+1;% zeros line at last.
-
-x = x - EMG_au*As';% (:,end)
-if ~if_rm_mean
-    x = bsxfun(@plus, x, mx);
-end
-if istr % transpose back.
-    x = x';
-end
+    if first_cross>1250
+        first_cross = find(EMG_au<=(median(abs(EMG_au))*1e-2),1,'first');
+    end
+    EMG_au(1:first_cross)=0;
+    AW.zero_first = first_cross;% zeros line at first.
+    
+    % last_cross
+    if abs(EMG_au(end))<(median(abs(EMG_au))*1e-3)
+        last_cross = nt;
+    else
+        last_cross = find(sign(EMG_au(1:(end-1)).*EMG_au(2:end))<0,1,'last');
+    end
+    if (nt-last_cross)>1250
+        last_cross = find(EMG_au<=(median(abs(EMG_au))*1e-2),1,'last');
+    end
+    EMG_au((last_cross+1):end)=0;
+    AW.zero_last = nt - last_cross+1;% zeros line at last.
+    
+    x = x - EMG_au*As';% (:,end)
+    if ~if_rm_mean
+        x = bsxfun(@plus, x, mx);
+    end
+    if istr % transpose back.
+        x = x';
+    end
 end
 %% OUTPUT OR SAVE DATA
 
@@ -335,8 +340,10 @@ if isave
             cwd = pwd;
         end
         FileName =  cwd((find(cwd=='/',1,'last')+1):end);
+        
         LFPfile = sprintf('%s%s.lfpd',savedir,FileName);
-        EMGfile = sprintf('%s%s.emg',savedir,FileName);
+        EMGfile = sprintf('%s%s.sh%d.emg',savedir,FileName,EMG_shank);
+        
         if exist(LFPfile,'file')
             warning(sprintf('%s already exist! Please check!\n Now saving to the %s.new files.', FileName, FileName))
             FileName = [FileName,'.new'];
@@ -350,19 +357,23 @@ if isave
         fclose(fileID);
         
         fileID = fopen(EMGfile,'w');
-        fwrite(fileID, int16(EMG_au'),'int16');
+        tmp_EMG_au = sign(sum(As))*sqrt(As'*As)*EMG_au;
+        fwrite(fileID, int16(tmp_EMG_au'),'int16');
         fclose(fileID);
     else
         if ~save_together
             save(sprintf('%s.EMG_rm.t%d-%d.ch%d-%d.mat',FileName,save_range{1}(1,:),save_range{1}(2,:)), 'AW','EMG_au','armodel')
         end
+        
         LFPfile = sprintf('%s%s.lfpd',savedir,FileName);
-        EMGfile = sprintf('%s%s.emg',savedir,FileName);
+        EMGfile = sprintf('%s%s.sh%d.emg',savedir,FileName,EMG_shank);
+        
         m = memmapfile(LFPfile,'Format',{'int16',save_range{2},'x'},'Writable',true);
         m.Data.x(save_range{1}(2,1):save_range{1}(2,2), save_range{1}(1,1):save_range{1}(1,2)) = int16(x');
         clear m
         m = memmapfile(EMGfile,'Format',{'int16',[1 save_range{2}(2)],'x'},'Writable',true);
-        m.Data.x(save_range{1}(1,1):save_range{1}(1,2)) = int16(EMG_au');
+        tmp_EMG_au = sign(sum(As))*sqrt(As'*As)*EMG_au;
+        m.Data.x(save_range{1}(1,1):save_range{1}(1,2)) = int16(tmp_EMG_au');
         clear m
     end
 end

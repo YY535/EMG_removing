@@ -179,18 +179,18 @@ for n = 1:nshank
         else
             tmp_included_periods=[];
         end
-        [~, Ws{k,n}, As{k,n}, EMG_au{k,n}, AW{k,n}, armodel] = EMG_rm_long(LoadBinary(LFPfile,HP,par.nChannels,2,[],[],tmp_Period)',   ...
+        [~, Ws{k,n}, As{k,n}, EMG_au{k,n}, AW{k,n}, armodel,scaling_factor(k,n)] = EMG_rm_long(LoadBinary(LFPfile,HP,par.nChannels,2,[],[],tmp_Period)',   ...
             silence_periods,tmp_included_periods,...
             Fs, rm_linenoise,line_thrd,hp_freq, ...
             EMG_thrd(tmp_Period(1):tmp_Period(2)), true, ...
             armodel, cmp_method, down_sample,numOfIC,...
-            true, save_range, FileBase, savedir, save_together,use_wb);
+            true, save_range, FileBase, savedir, save_together,use_wb,denoise_shank(n));
     end
 end
 
 if save_together
     shank_names = sprintf('%d-',denoise_shank);
-    save(sprintf('%s/%s.EMG_rm.sh%s.mat',savedir,FileBase,shank_names(1:(end-1))), 'Ws','As','AW','EMG_au','armodel','sug_period','par','denoise_shank','LFPfile')
+    save(sprintf('%s/%s.EMG_rm.sh%s.mat',savedir,FileBase,shank_names(1:(end-1))), 'Ws','As','AW','EMG_au','armodel','sug_period','par','denoise_shank','LFPfile','scaling_factor')
 end
 
 %% COMPLETE OTHER CHANNELS

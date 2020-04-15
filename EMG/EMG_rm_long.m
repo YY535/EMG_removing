@@ -4,7 +4,8 @@ function varargout = EMG_rm_long(x, varargin)
 %                                       SamplingRate, 
 %                                       high_pass_freq, EMG_thrd, if_rm_mean, 
 %                                       armodel, cmp_method, down_sample,
-%                                       isave, save_range, FileName, savedir])
+%                                       isave, save_range, FileName, savedir,
+%                                       save_together,use_wb,EMG_shank])
 % function to remove the EMG noise in a long period. 
 % EMG detected by high frequency (>high_pass_freq) correlated activity
 % among channels. 
@@ -51,6 +52,7 @@ function varargout = EMG_rm_long(x, varargin)
 %               can't find a proper flat component at high frequency band
 %               defualt: true NB: please check the report fig to see if you
 %               really need this! 
+%       EMG_shank: the shank currently used. 0: no shank number is given
 %       
 % Outputs:
 %   x: EMG removed signal.
@@ -75,8 +77,8 @@ function varargout = EMG_rm_long(x, varargin)
 %% COMPLETE VARIABLES
 
 cwd=pwd; %
-[silence_periods, included_periods, LFPfs, rm_linenoise, line_thrd, high_pass_freq, EMG_thrd, if_rm_mean,armodel,cmp_method,down_sample,numOfIC,isave,save_range,FileName,savedir,save_together,use_wb] = ...
-    DefaultArgs(varargin, {false, [], 1000, true, 2, 100, [], true,[],'hw',3,0,false,[],[],[],true,false});
+[silence_periods, included_periods, LFPfs, rm_linenoise, line_thrd, high_pass_freq, EMG_thrd, if_rm_mean,armodel,cmp_method,down_sample,numOfIC,isave,save_range,FileName,savedir,save_together,use_wb,EMG_shank] = ...
+    DefaultArgs(varargin, {false, [], 1000, true, 2, 100, [], true,[],'hw',3,0,false,[],[],[],true,false,0});
 [nt, nch] = size(x);
 if isempty(included_periods)
     included_periods = 1:nt;
@@ -308,7 +310,7 @@ if sum(selectedprd)
     end
 end
 %% OUTPUT OR SAVE DATA
-
+scaling_factor = sign(sum(As))*sqrt(As'*As);
 if nargout>1
     varargout{1} = x;
     varargout{2} = Ws;
@@ -316,6 +318,7 @@ if nargout>1
     varargout{4} = EMG_au;
     varargout{5} = AW;
     varargout{6} = tmp_ar;
+    varargout{7} = scaling_factor;
 else 
     isave = true;
 end
@@ -335,8 +338,10 @@ if isave
             cwd = pwd;
         end
         FileName =  cwd((find(cwd=='/',1,'last')+1):end);
+        
         LFPfile = sprintf('%s%s.lfpd',savedir,FileName);
-        EMGfile = sprintf('%s%s.emg',savedir,FileName);
+        EMGfile = sprintf('%s%s.sh%d.emg',savedir,FileName,EMG_shank);
+        
         if exist(LFPfile,'file')
             warning(sprintf('%s already exist! Please check!\n Now saving to the %s.new files.', FileName, FileName))
             FileName = [FileName,'.new'];
@@ -350,19 +355,23 @@ if isave
         fclose(fileID);
         
         fileID = fopen(EMGfile,'w');
-        fwrite(fileID, int16(EMG_au'),'int16');
+        tmp_EMG_au = scaling_factor*EMG_au;
+        fwrite(fileID, int16(tmp_EMG_au'),'int16');
         fclose(fileID);
     else
         if ~save_together
             save(sprintf('%s.EMG_rm.t%d-%d.ch%d-%d.mat',FileName,save_range{1}(1,:),save_range{1}(2,:)), 'AW','EMG_au','armodel')
         end
+        
         LFPfile = sprintf('%s%s.lfpd',savedir,FileName);
-        EMGfile = sprintf('%s%s.emg',savedir,FileName);
+        EMGfile = sprintf('%s%s.sh%d.emg',savedir,FileName,EMG_shank);
+        
         m = memmapfile(LFPfile,'Format',{'int16',save_range{2},'x'},'Writable',true);
         m.Data.x(save_range{1}(2,1):save_range{1}(2,2), save_range{1}(1,1):save_range{1}(1,2)) = int16(x');
         clear m
         m = memmapfile(EMGfile,'Format',{'int16',[1 save_range{2}(2)],'x'},'Writable',true);
-        m.Data.x(save_range{1}(1,1):save_range{1}(1,2)) = int16(EMG_au');
+        tmp_EMG_au = scaling_factor*EMG_au;
+        m.Data.x(save_range{1}(1,1):save_range{1}(1,2)) = int16(tmp_EMG_au');
         clear m
     end
 end
