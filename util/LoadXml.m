@@ -1,4 +1,4 @@
-%function [xml, rxml] = LoadXml(FileBase)
+%function [xml, rxml] = loadxml(FileBase)
 %loads the xml file using xmltools (have to have it in the path)
 % rxml returns it's original layout - very messy structure but contains all
 % the xml file contents.
@@ -8,7 +8,7 @@
 % more can be added later (e.g. parameters of the process scripts)
 % this script is written for xml version 1.1 .. older version doesn't work.
 % additions are welcome
-function [xml, rxml] = LoadXml(FileBase,varargin)
+function [xml, rxml] = loadxml(FileBase,varargin)
 xml = struct;
 
 %if xml was in the filebase 

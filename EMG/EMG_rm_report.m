@@ -75,11 +75,11 @@ for kk = 1:nfile
     dlfp = double(mlfp.Data.x(ch,:))';
     dlfp = bsxfun(@minus,dlfp,mean(dlfp));%zscore(dlfp);
     if isfield(armodel,'ARmodel')
-        lfp=WhitenSignal(lfp,[],[],armodel.ARmodel);
-        dlfp=WhitenSignal(dlfp,[],[],armodel.ARmodel);
+        lfp=whitensignal(lfp,[],[],armodel.ARmodel);
+        dlfp=whitensignal(dlfp,[],[],armodel.ARmodel);
     else
-        lfp=WhitenSignal(lfp,[],[],armodel);
-        dlfp=WhitenSignal(dlfp,[],[],armodel);
+        lfp=whitensignal(lfp,[],[],armodel);
+        dlfp=whitensignal(dlfp,[],[],armodel);
     end
     
     %%
@@ -150,10 +150,10 @@ for kk = 1:nfile
             end
             if EMG_REMOVED
                 if isfield(armodel,'ARmodel')
-                    [yo, fo] = mtcsdfast([WhitenSignal(EMG_au{k}*As{k}(ch(n)),[],[],armodel.ARmodel), lfp(sug_period(k,1):sug_period(k,2),n), dlfp(sug_period(k,1):sug_period(k,2),n)],...
+                    [yo, fo] = mtcsdfast([whitensignal(EMG_au{k}*As{k}(ch(n)),[],[],armodel.ARmodel), lfp(sug_period(k,1):sug_period(k,2),n), dlfp(sug_period(k,1):sug_period(k,2),n)],...
                         [],par.lfpSampleRate);
                 else
-                    [yo, fo] = mtcsdfast([WhitenSignal(EMG_au{k}*As{k}(ch(n)),[],[],armodel), lfp(sug_period(k,1):sug_period(k,2),n), dlfp(sug_period(k,1):sug_period(k,2),n)],...
+                    [yo, fo] = mtcsdfast([whitensignal(EMG_au{k}*As{k}(ch(n)),[],[],armodel), lfp(sug_period(k,1):sug_period(k,2),n), dlfp(sug_period(k,1):sug_period(k,2),n)],...
                         [],par.lfpSampleRate);
                 end
                 plot(fo,abs(sq([yo(:,1,1),yo(:,2,2),yo(:,3,3)])))

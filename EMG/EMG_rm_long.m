@@ -115,29 +115,29 @@ x = bsxfun(@minus, x, mx);
 
 % Whitening data
 if isempty(armodel)
-    armodel = dir('*.WhitenSignal.ARmodel.lfp.mat');
+    armodel = dir('*.whitensignal.ARmodel.lfp.mat');
     if isempty(armodel)
-        [wx,armodel]=WhitenSignal(x,[],[],[],1);
+        [wx,armodel]=whitensignal(x,[],[],[],1);
         tmp_ar = armodel;
     else
         armodel = load(armodel(1).name);
-        wx=WhitenSignal(x,[],[],armodel.ARmodel);
+        wx=whitensignal(x,[],[],armodel.ARmodel);
         tmp_ar = armodel.ARmode;
     end
 elseif isstr(armodel)
     armodel = load(armodel);
     tmp_ar = armodel.ARmodel;
-    wx=WhitenSignal(x,[],[],tmp_ar);
+    wx=whitensignal(x,[],[],tmp_ar);
 elseif isfield(armodel,'ARmodel')
     tmp_ar = armodel.ARmodel;
-    wx=WhitenSignal(x,[],[],tmp_ar);
+    wx=whitensignal(x,[],[],tmp_ar);
 else 
     try
         tmp_ar = armodel;
-        wx=WhitenSignal(x,[],[],armodel);
+        wx=whitensignal(x,[],[],armodel);
     catch 
         warning('Something wrong with the AR model you give, try whiten without given model.')
-        [wx, armodel]=WhitenSignal(x,[],[],[],1);
+        [wx, armodel]=whitensignal(x,[],[],[],1);
         tmp_ar = armodel;
     end
 end
@@ -179,7 +179,7 @@ if sum(selectedprd)
     % Components from the high frequency.
     switch lower(cmp_method) %
         case 'hw'
-            hx = ButFilter(x,4,high_pass_freq/(LFPfs/2),'high');
+            hx = butfilter(x,4,high_pass_freq/(LFPfs/2),'high');
             [Ah, Wh] = fastica(hx(selectedprd,:)', 'numOfIC', numOfIC,'verbose','off');
             % [~, EMG_comp] = max(abs(sum(opf_A(Ah))));
             [~,rod] = sort(abs(sum(opf_A(Ah))),'descend');
@@ -192,7 +192,7 @@ if sum(selectedprd)
             W = Wx*Wh(rod,:);
             if (sum(abs(sum(opf_A(A)))>nch)>1) || sum(abs(sum(opf_A(A)))>(2*nch))<1
                 fprintf('recompute...\n')
-                wx=WhitenSignal(wx,[],[],tmp_ar);
+                wx=whitensignal(wx,[],[],tmp_ar);
                 nn = 1;
                 while  ((sum(abs(sum(opf_A(A)))>nch)>1) || sum(abs(sum(opf_A(A)))>(2*nch))<1)&&(nn<5)
                     % too many flat components.

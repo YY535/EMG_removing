@@ -1,4 +1,4 @@
-%function [Data OrigIndex]= LoadBinary(FileName, Channels, nChannels, method, intype, outtype, Periods, Resample)
+%function [Data OrigIndex]= loadbinary(FileName, Channels, nChannels, method, intype, outtype, Periods, Resample)
 %   Channels - list of channels to load starting from 1
 %   nChannels - number of channels in a file, will be read from par/xml file if present
 %   intype/outtype - data types in the file and in the matrix to load to
@@ -30,7 +30,7 @@
 % filter is implemented.
 % complaints to : Anton
 
-function [data OrigIndex]= LoadBinary(FileName, Channels, varargin)
+function [data OrigIndex]= loadbinary(FileName, Channels, varargin)
 
 if ~isobject(FileName)
    
@@ -51,7 +51,7 @@ if ~isobject(FileName)
     FileBase=FileName(1:lastdot(end)-1);
     if (nargin<3 || isempty(varargin{1})) 
         if (FileExists([FileBase '.xml']) | FileExists([FileBase '.par']))
-            Par = LoadPar(FileBase);
+            Par = loadxml(FileBase);
             nChannels = Par.nChannels;
         else
             nChannels = 0;

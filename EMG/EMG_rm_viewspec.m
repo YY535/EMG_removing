@@ -73,7 +73,7 @@ clear mlfp
 %% DATA PROCESSING
 for ksh = 1:length(denoise_shank)
     tmp_shank = denoise_shank(ksh);
-    HP = par.AnatGrps(tmp_shank).Channels-par.AnatGrps(1).Channels(1)+1;
+    HP = par.AnatGrps(tmp_shank).Channels+1;
     nch = length(HP);
     if exist(sprintf('%s/%s.sh.%d.EMG_Spec.mat',savedir,FileBase,tmp_shank),'file')
         load(sprintf('%s/%s.sh.%d.EMG_Spec.mat',savedir,FileBase,tmp_shank), 'y2','f','t')
@@ -82,7 +82,7 @@ for ksh = 1:length(denoise_shank)
         emg = memmapfile([FileBase, '.sh', num2str(tmp_shank),'.emg'],'Format',{'int16',[1 data_range(2)],'x'});
         EMG = double(emg.Data.x);
         EMG = EMG(:) - mean(EMG);
-        EMG=WhitenSignal(EMG,[],[],AW{1}.armodel);
+        EMG=whitensignal(EMG,[],[],AW{1}.armodel);
         for n = 1:nch
             fprintf('\rShank:%d, Channel: %d, ...', ksh,n)
             mlfp = memmapfile(LFPfile,'Format',{'int16',data_range,'x'});
@@ -93,11 +93,11 @@ for ksh = 1:length(denoise_shank)
             dlfp = bsxfun(@minus,dlfp,mean(dlfp));%zscore(dlfp);
             
             if isfield(armodel,'ARmodel')
-                lfp=WhitenSignal(lfp,[],[],armodel.ARmodel);
-                dlfp=WhitenSignal(dlfp,[],[],armodel.ARmodel);
+                lfp=whitensignal(lfp,[],[],armodel.ARmodel);
+                dlfp=whitensignal(dlfp,[],[],armodel.ARmodel);
             else
-                lfp=WhitenSignal(lfp,[],[],armodel);
-                dlfp=WhitenSignal(dlfp,[],[],armodel);
+                lfp=whitensignal(lfp,[],[],armodel);
+                dlfp=whitensignal(dlfp,[],[],armodel);
             end
             [tmp_y2, f, t, ~, ~,~] = mtcsdlong_E([EMG,lfp,dlfp],nFFT,par.lfpSampleRate, WinLength);
             y2{n}=tmp_y2(:,f<400,[1 5 9 7]);

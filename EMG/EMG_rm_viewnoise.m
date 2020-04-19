@@ -59,7 +59,7 @@ for  ksh = 1:nsh
         emg = memmapfile([FileBase, '.emg'],'Format',{'int16',[1 data_range(2)],'x'});
     end
     
-    HP = par.AnatGrps(tmp_shank).Channels-par.AnatGrps(1).Channels(1)+1;
+    HP = par.AnatGrps(tmp_shank).Channels+1;
     
     opf1 = @(x)(bsxfun(@plus,x,-HP(:)'));
     if sfactor<0

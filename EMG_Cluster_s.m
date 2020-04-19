@@ -70,7 +70,7 @@ end
 %% DATA PREPROCESSING
 
 nch = size(x,2);
-tmp_x = ButFilter(x,4,hp_freq/(lfpSamplingRate/2),'high');
+tmp_x = butfilter(x,4,hp_freq/(lfpSamplingRate/2),'high');
 clear x
 tmp_x = zscore(tmp_x); % zscore to compute the coherence instead of covariance. 
 % I guess it's not a big deal to use the covariance. 

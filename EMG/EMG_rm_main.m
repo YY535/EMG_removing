@@ -74,8 +74,8 @@ else
     return
 end
 
-par=LoadXml(FileBase);
-HP = par.AnatGrps(denoise_shank(1)).Channels +1- par.AnatGrps(1).Channels(1);
+par=loadxml(FileBase);
+HP = par.AnatGrps(denoise_shank(1)).Channels+1;% assuming the chanels coding starts from 0. 
 Fs = par.lfpSampleRate;
 if isempty(cleanEMGch)
     cleanEMGch = fix(linspace(3,length(HP)-3,5));% channels to detect high coherence periods.
@@ -128,7 +128,7 @@ else
     swin = 500;
     lwinms = 20;
     
-    lfp = LoadBinary(LFPfile,cleanEMGch,par.nChannels,2,[],[],Evts)';%
+    lfp = loadbinary(LFPfile,cleanEMGch,par.nChannels,2,[],[],Evts)';%
     lfp=bsxfun(@minus,lfp,mean(lfp,1));
     
     fprintf('\nDetecting EMG periods...\n')
@@ -168,7 +168,7 @@ As = cell(nPeriod,nshank);
 EMG_au = cell(nPeriod,nshank);
 AW  = cell(nPeriod,nshank);
 for n = 1:nshank
-    HP = par.AnatGrps(denoise_shank(n)).Channels +1- par.AnatGrps(1).Channels(1);
+    HP = par.AnatGrps(denoise_shank(n)).Channels +1;% - par.AnatGrps(1).Channels(1);
     HPs = [HPs;HP(:)];
     for k = 1:nPeriod
         fprintf('\rshank%d, period%d in %d...', n, k, nPeriod)

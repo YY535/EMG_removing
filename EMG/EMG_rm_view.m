@@ -57,9 +57,9 @@ catch
     warning('No EMG_Cluster file in current folder!!')
 end
 %% THE DATA TO SHOW
-par=LoadXml(FileBase);
+par=loadxml(FileBase);
 if isempty(Channels)
-    Channels = par.AnatGrps(1).Channels +1- par.AnatGrps(1).Channels(1);
+    Channels = par.AnatGrps(1).Channels +1;
 end
 Fs = par.lfpSampleRate;
 if isempty(WinLen)
