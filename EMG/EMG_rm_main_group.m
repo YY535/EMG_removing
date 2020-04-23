@@ -14,6 +14,7 @@ function EMG_rm_main_group(FileBase,denoise_groups,varargin)
 %   denoise_groups: the shank groups for denoising in cell. e.g.,
 %                  {[shk_1,shank2],shk_n} 
 %   Optional:
+%       keep_former: keep the former denoising results
 %       savedir: path to save the cleaned files.
 %       cleanEMGch: the channels to detect EMG noise. defualt: 5 sampled in
 %                   the first shank.
@@ -51,7 +52,7 @@ function EMG_rm_main_group(FileBase,denoise_groups,varargin)
 %
 % Error contact: chen at biologie.uni-muenchen.de
 % 
-[savedir,cleanEMGch,silence_periods,sp_loadingfuns,rm_linenoise,line_thrd, numOfIC, hp_freq,nchunks, cmp_method,down_sample,nFFT, Winlength, save_together,use_wb,PeriodLengthLimits] = DefaultArgs(varargin, {pwd,[],false,[],true,1.8,[], 100,6, 'hw',3, 2^9,[],true,false,1e6});
+[keep_former,savedir,cleanEMGch,silence_periods,sp_loadingfuns,rm_linenoise,line_thrd, numOfIC, hp_freq,nchunks, cmp_method,down_sample,nFFT, Winlength, save_together,use_wb,PeriodLengthLimits] = DefaultArgs(varargin, {false,pwd,[],false,[],true,1.8,[], 100,6, 'hw',3, 2^9,[],true,false,1e6});
 
 if exist([FileBase,'.lfpinterp'],'file')
     LFPfile = [FileBase,'.lfpinterp'];
@@ -76,8 +77,10 @@ par=loadxml(FileBase);
 nG = length(denoise_groups);
 HPs = cell(nG,1);
 Shk01 = cell(nG,1);
+denoise_shank=[];
 for  k = 1:nG
     nshk = length(denoise_groups{k});
+    denoise_shank=[denoise_shank,denoise_groups{k}(:)'];
     Shk01{k} = zeros(nshk,2);
     last_channel = 0;
     for n  =1:nshk
@@ -128,14 +131,14 @@ if ~exist(FileName,'file')
     clear myData
 end
 
-myData = int16(zeros(1,Evts(end)));
-EMGFileName = [FileBase,'.emg'];
-if ~exist(EMGFileName,'file')
-    fileID = fopen(EMGFileName,'w');
-    fwrite(fileID, myData,'int16');
-    fclose(fileID);
-    clear myData
-end
+% myData = int16(zeros(1,Evts(end)));
+% EMGFileName = [FileBase,'.emg'];
+% if ~exist(EMGFileName,'file')
+%     fileID = fopen(EMGFileName,'w');
+%     fwrite(fileID, myData,'int16');
+%     fclose(fileID);
+%     clear myData
+% end
 
 save_range = cell(2,1);
 save_range{2} = [par.nChannels, Evts(end)];
@@ -194,6 +197,16 @@ AW  = cell(nPeriod,nG);
 for n = 1:nG
     HP = HPs{n} +1;% - par.AnatGrps(1).Channels(1);
     HPses = [HPses;HP(:)];
+    
+    myData = int16(zeros(1,Evts(end)));
+    EMGFileName = sprintf('%s%s.G%d.emg',savedir,FileName,n);
+    if ~exist(EMGFileName,'file')
+        fileID = fopen(EMGFileName,'w');
+        fwrite(fileID, myData,'int16');
+        fclose(fileID);
+        clear myData
+    end
+    
     for k = 1:nPeriod
         fprintf('\rshank%d, period%d in %d...', n, k, nPeriod)
         tmp_Period = sug_period(k,:);
@@ -214,7 +227,7 @@ end
 
 if save_together
     shank_names = sprintf('%d-',denoise_shank);
-    save(sprintf('%s/%s.EMG_rm.sh%s.mat',savedir,FileBase,shank_names(1:(end-1))), 'Ws','As','AW','EMG_au','armodel','sug_period','par','denoise_shank','LFPfile','scaling_factor')
+    save(sprintf('%s/%s.EMG_rm.G%s.mat',savedir,FileBase,shank_names(1:(end-1))), 'Ws','As','AW','EMG_au','armodel','sug_period','par','denoise_shank','LFPfile','scaling_factor')
 end
 
 %% COMPLETE OTHER CHANNELS

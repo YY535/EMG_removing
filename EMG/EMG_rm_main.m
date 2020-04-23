@@ -103,14 +103,14 @@ if ~exist(FileName,'file')
     clear myData
 end
 
-myData = int16(zeros(1,Evts(end)));
-EMGFileName = [FileBase,'.emg'];
-if ~exist(EMGFileName,'file')
-    fileID = fopen(EMGFileName,'w');
-    fwrite(fileID, myData,'int16');
-    fclose(fileID);
-    clear myData
-end
+% myData = int16(zeros(1,Evts(end)));
+% EMGFileName = [FileBase,'.emg'];
+% if ~exist(EMGFileName,'file')
+%     fileID = fopen(EMGFileName,'w');
+%     fwrite(fileID, myData,'int16');
+%     fclose(fileID);
+%     clear myData
+% end
 
 save_range = cell(2,1);
 save_range{2} = [par.nChannels, Evts(end)];
@@ -170,6 +170,16 @@ AW  = cell(nPeriod,nshank);
 for n = 1:nshank
     HP = par.AnatGrps(denoise_shank(n)).Channels +1;% - par.AnatGrps(1).Channels(1);
     HPs = [HPs;HP(:)];
+    
+    myData = int16(zeros(1,Evts(end)));
+    EMGFileName = sprintf('%s%s.sh%d.emg',savedir,FileName,denoise_shank(n));
+    if ~exist(EMGFileName,'file')
+        fileID = fopen(EMGFileName,'w');
+        fwrite(fileID, myData,'int16');
+        fclose(fileID);
+        clear myData
+    end
+    
     for k = 1:nPeriod
         fprintf('\rshank%d, period%d in %d...', n, k, nPeriod)
         tmp_Period = sug_period(k,:);

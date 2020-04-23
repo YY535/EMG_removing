@@ -3,11 +3,13 @@ function r = SREaffineV(x,y,varargin)
 % the "non-flateness" of a vector.
 % fit linear model to the data then compute the SRE.
 % error contact chen at biologie.uni-muenchen.de
-[Shk01, iscenter] = DefaultArgs(varargin, {-1, true});
+[Shk01, iscenter,keepy] = DefaultArgs(varargin, {-1, true,false});
 [nt, ny] = size(y);
-if nt < ny
-    y = y';
-    [nt, ny] = size(y);
+if ~keepy
+    if nt < ny
+        y = y';
+        [nt, ny] = size(y);
+    end
 end
 [nx, nch] = size(x);
 if nx ~= nt
@@ -22,7 +24,7 @@ r = zeros(nch,ny);
 if Shk01(1)>0
     for k = 1:size(Shk01,1)
         tmp = Shk01(k,1):Shk01(k,2);
-        r(tmp,:) = SREaffineV(x(tmp,:),y(tmp,:));
+        r = r+SREaffineV(x(tmp,:),y(tmp,:),[],[],true);
     end
 else
     % opf_x = @(x)(x'*x/(length(x)-1));
