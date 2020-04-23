@@ -185,7 +185,7 @@ if rm_linenoise
 end
 
 %% EMG COMPONENTS AND ACTIVITIES
-if sum(selectedprd)>=(10*nch)
+if sum(selectedprd)>=(10*nch*LFPfs)
     AW.usewb = false;
     % Components from the high frequency.
     switch lower(cmp_method) %
