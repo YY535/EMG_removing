@@ -21,8 +21,7 @@ end
 r = zeros(nch,ny);
 if Shk01(1)>0
     for k = 1:size(Shk01,1)
-        tmp = Shk01(k,1):Shk01(k,2);
-        r(tmp,:) = SREaffineV(x(tmp,:),y(tmp,:));
+        r() = SREaffineV(x(Shk01(k,1):Shk01(k,2),:),y(Shk01(k,1):Shk01(k,2),:));
     end
 else
     % opf_x = @(x)(x'*x/(length(x)-1));

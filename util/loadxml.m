@@ -23,7 +23,7 @@ rxml = rxml.child(2);
 % from this level all children are the different parameters fields
 
 xml.FileName = FileBase;
-
+min_channel=0;
 for i=1:length(rxml.child)
 
     switch rxml.child(i).tag
@@ -50,6 +50,8 @@ for i=1:length(rxml.child)
                     xml.AnatGrps(grpI).Channels(chI) = str2num(tmp(grpI).child(chI).value);
                     xml.AnatGrps(grpI).Skip(chI) = str2num(tmp(grpI).child(chI).attribs.value);
                 end
+                xml.GroupChannels(grpI) = sum(~xml.AnatGrps(grpI).Skip);
+                min_channel(grpI)=min(xml.AnatGrps(grpI).Channels(:));
             end
             
         case 'spikeDetection'
@@ -91,6 +93,11 @@ for i=1:length(rxml.child)
 
 
 end
-
+min_channel = min(min_channel);
+if min_channel>0
+    for k = 1:length(xml.AnatGrps)
+        xml.AnatGrps(k).Channels=xml.AnatGrps(k).Channels-min_channel;
+    end
+end
 
 % general recursive parsing will have to wait.
