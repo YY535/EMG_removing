@@ -33,7 +33,7 @@ cX = cov(x(:,use_Period)');
 
 Wnew=(x(:,use_Period)*EMG_au(use_Period))'/(cX+tol*eye(nch))/T;
 Anew=u*s*u'*Wnew';
-dx=x-Anew*EMG_au;
-if ˜remove_mean
+dx=x-Anew*EMG_au';
+if ~remove_mean
     dx=bsxfun(@plus,dx,mx);
 end

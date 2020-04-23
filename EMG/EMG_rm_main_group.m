@@ -129,6 +129,7 @@ if ~exist(FileName,'file')
     fwrite(fileID, myData,'int16');
     fclose(fileID);
     clear myData
+    keep_former=false;
 end
 
 % myData = int16(zeros(1,Evts(end)));
@@ -197,7 +198,7 @@ AW  = cell(nPeriod,nG);
 for n = 1:nG
     HP = HPs{n} +1;% - par.AnatGrps(1).Channels(1);
     HPses = [HPses;HP(:)];
-    
+    try
     myData = int16(zeros(1,Evts(end)));
     EMGFileName = sprintf('%s%s.G%d.emg',savedir,FileName,n);
     if ~exist(EMGFileName,'file')
@@ -205,6 +206,9 @@ for n = 1:nG
         fwrite(fileID, myData,'int16');
         fclose(fileID);
         clear myData
+    end
+    catch
+        fprintf('\n!!!Fail to save %s.\n',EMGFileName)
     end
     
     for k = 1:nPeriod
@@ -231,6 +235,7 @@ if save_together
 end
 
 %% COMPLETE OTHER CHANNELS
+if ~keep_former
 other_channels = setdiff(1:par.nChannels,HPses);
 nothrch = length(other_channels);
 m = memmapfile(FileName,'Format',{'int16',save_range{2},'x'},'Writable',true);
@@ -239,6 +244,7 @@ for k = 1:nothrch
     m.Data.x(other_channels(k),:) = mlfp.Data.x(other_channels(k),:);
 end
 clear m mflp
+end
 fprintf('\nDone\n')
 %% CHECK RESULTS:
 PYR_Channel = 37;
