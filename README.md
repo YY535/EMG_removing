@@ -32,10 +32,11 @@ EMG_rm_main(FileBase,[],denoise_shanks,[],silence_periods,sp_loadingfuns,rm_line
 ngroups=1;
 Grps=cell(ngroups,1);
 Grps{1}=[1,2];
-EMG_rm_main_group(FileBase,Grps,[],[],silence_periods,sp_loadingfuns,rm_line_noise)
+keep_old_lfpd = true;
+EMG_rm_main_group(FileBase,Grps,keep_old_lfpd,[],[],silence_periods,sp_loadingfuns,rm_line_noise)
 ```
 
-- Notice the function `EMG_rm_main.m` or `EMG_rm_long.m` by defualt automatically remove the line noise component. If you don't want to do this, set this parameter to `false`. Sometimes people prefer to remove noise in the awake periods and left sleeping periods unchanged. To do this you would need to give the periods you don't want to touch in `silence_periods`. In this case, if you have any function other than `load` to import the periods, specify it in `sp_loadingfuns` with the function name and remember to add that to your path. 
+- Notice the function `EMG_rm_main.m` or `EMG_rm_long.m` by defualt automatically remove the line noise component. If you don't want to do this, set this parameter to `false`. Sometimes people prefer to remove noise in the awake periods and left sleeping periods unchanged. To do this you would need to give the periods you don't want to touch in `silence_periods`. In this case, if you have any function other than `load` to import the periods, specify it in `sp_loadingfuns` with the function name and remember to add that to your path. `EMG_rm_main_group.m` allows one to fit the components simultaneously for all the shanks in a group, groups is given in cell. The `keep_old_lfpd` allows one to keep the old denoing results and only work on the new groups. 
 
 ## Check the Results:
 The cleaned signals will be saved in `.lfpd` files and the EMG activity in `.emg`. The EMG signals (`EMG_au`) and the EMG components `AW.As` is saved in `FileBase.EMG_rm.mat`. To check the cleaned signal, use:
