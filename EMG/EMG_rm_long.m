@@ -357,7 +357,11 @@ if isave
             LFPfile = sprintf('%s%s.lfpd',savedir,FileName);
         end
         if ~save_together
-            save(sprintf('%s.EMG_rm.t%d-%d.ch%d-%d.mat',FileName,save_range(1,:),save_range(2,:)), 'AW','EMG_au','armodel')
+            G_par.HPs = HP;
+            G_par.Shk01=Shk01;
+%             par.lfpSampleRate=LFPfs;
+            denoise_shank=EMG_shank;
+            save(sprintf('%s.EMG_rm.t%d-%d.ch%d-%d.mat',FileName,save_range(1,:),save_range(2,:)), 'AW','EMG_au','armodel','Ws','As','armodel','selectedprd','denoise_shank','LFPfile','scaling_factor','G_par')
         end
         fileID = fopen(LFPfile,'w');
         fwrite(fileID, int16(x'),'int16');
@@ -369,7 +373,11 @@ if isave
         fclose(fileID);
     else
         if ~save_together
-            save(sprintf('%s.EMG_rm.t%d-%d.ch%d-%d.mat',FileName,save_range{1}(1,:),save_range{1}(2,:)), 'AW','EMG_au','armodel')
+            G_par.HPs = HP;
+            G_par.Shk01=Shk01;
+%             par.lfpSampleRate=LFPfs;
+            denoise_shank=EMG_shank;
+            save(sprintf('%s.EMG_rm.t%d-%d.ch%d-%d.mat',FileName,save_range{1}(1,:),save_range{1}(2,:)), 'AW','EMG_au','armodel','Ws','As','armodel','selectedprd','denoise_shank','LFPfile','scaling_factor','G_par')
         end
         
         LFPfile = sprintf('%s%s.lfpd',savedir,FileName);

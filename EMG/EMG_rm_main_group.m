@@ -232,7 +232,7 @@ end
 
 if save_together
     shank_names = sprintf('%d-',denoise_shank);
-    save(sprintf('%s/%s.EMG_rm.G%s.mat',savedir,FileBase,shank_names(1:(end-1))), 'Ws','As','AW','EMG_au','armodel','sug_period','par','denoise_shank','LFPfile','scaling_factor')
+    save(sprintf('%s/%s.EMG_rm.G%s.mat',savedir,FileBase,shank_names(1:(end-1))), 'Ws','As','AW','EMG_au','armodel','sug_period','par','denoise_shank','LFPfile','scaling_factor','G_par')
 end
 
 %% COMPLETE OTHER CHANNELS
