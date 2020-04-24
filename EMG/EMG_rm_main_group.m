@@ -247,13 +247,5 @@ end
 clear m mflp
 end
 fprintf('\nDone\n')
-%% CHECK RESULTS:
-PYR_Channel = 37;
-EMG_rm_report();% ([],PYR_Channel);
-EMG_rm_viewnoise();% (PYR_Channel,[])
-if Evts(end)>1.6e7
-    nFFT = 2^(32-ceil(log2(Evts(end))));
-    fprintf('\nNB: we are using nFFT: %d, recompute EMG_rm_viewspec() if you want.',nFFT)
-end
-EMG_rm_viewspec([],[],[],[],nFFT,Winlength);
+% %% CHECK RESULTS:
 % EOF
