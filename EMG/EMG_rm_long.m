@@ -348,13 +348,13 @@ if isave
         end
         FileName =  cwd((find(cwd=='/',1,'last')+1):end);
         
-        LFPfile = sprintf('%s/%s.lfpd',savedir,FileName);
-        EMGfile = sprintf('%s/%s.sh%d.emg',savedir,FileName,EMG_shank);
+        LFPfile = sprintf('%s%s.lfpd',savedir,FileName);
+        EMGfile = sprintf('%s%s.sh%d.emg',savedir,FileName,EMG_shank);
         
         if exist(LFPfile,'file')
             warning(sprintf('%s already exist! Please check!\n Now saving to the %s.new files.', FileName, FileName))
             FileName = [FileName,'.new'];
-            LFPfile = sprintf('%s/%s.lfpd',savedir,FileName);
+            LFPfile = sprintf('%s%s.lfpd',savedir,FileName);
         end
         if ~save_together
             G_par.HPs = HP;
@@ -380,8 +380,8 @@ if isave
             save(sprintf('%s.EMG_rm.t%d-%d.ch%d-%d.mat',FileName,save_range{1}(1,:),save_range{1}(2,:)), 'AW','EMG_au','armodel','Ws','As','armodel','selectedprd','denoise_shank','LFPfile','scaling_factor','G_par')
         end
         
-        LFPfile = sprintf('%s/%s.lfpd',savedir,FileName);
-        EMGfile = sprintf('%s/%s.sh%d.emg',savedir,FileName,EMG_shank);
+        LFPfile = sprintf('%s%s.lfpd',savedir,FileName);
+        EMGfile = sprintf('%s%s.sh%d.emg',savedir,FileName,EMG_shank);
         
         m = memmapfile(LFPfile,'Format',{'int16',save_range{2},'x'},'Writable',true);
         m.Data.x(HP, save_range{1}(1,1):save_range{1}(1,2)) = int16(x');
