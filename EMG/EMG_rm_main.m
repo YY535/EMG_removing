@@ -172,7 +172,7 @@ for n = 1:nshank
     HPs = [HPs;HP(:)];
     
     myData = int16(zeros(1,Evts(end)));
-    EMGFileName = sprintf('%s/%s.sh%d.emg',savedir,FileName,denoise_shank(n));
+    EMGFileName = sprintf('%s/%s.sh%d.emg',savedir,FileBase,denoise_shank(n));
     if ~exist(EMGFileName,'file')
         fileID = fopen(EMGFileName,'w');
         fwrite(fileID, myData,'int16');

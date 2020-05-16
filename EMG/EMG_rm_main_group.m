@@ -201,7 +201,7 @@ for n = 1:nG
     HPses = [HPses;HP(:)];
     try
     myData = int16(zeros(1,Evts(end)));
-    EMGFileName = sprintf('%s/%s.G%d.emg',savedir,FileName,n);
+    EMGFileName = sprintf('%s/%s.G%d.emg',savedir,FileBase,n);
     if ~exist(EMGFileName,'file')
         fileID = fopen(EMGFileName,'w');
         fwrite(fileID, myData,'int16');
