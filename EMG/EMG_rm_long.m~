@@ -55,7 +55,7 @@ function varargout = EMG_rm_long(x, varargin)
 %       EMG_shank: the shank currently used. 0: no shank number is given
 %       HP:
 %       Shk01:
-%       EMGfile
+%       EMGFileName
 %       
 % Outputs:
 %   x: EMG removed signal.
@@ -80,7 +80,7 @@ function varargout = EMG_rm_long(x, varargin)
 %% COMPLETE VARIABLES
 
 cwd=pwd; %
-[silence_periods, included_periods, LFPfs, rm_linenoise, line_thrd, high_pass_freq, EMG_thrd, if_rm_mean,armodel,cmp_method,down_sample,numOfIC,isave,save_range,FileName,savedir,save_together,use_wb,EMG_shank,HP,Shk01,EMGfile] = ...
+[silence_periods, included_periods, LFPfs, rm_linenoise, line_thrd, high_pass_freq, EMG_thrd, if_rm_mean,armodel,cmp_method,down_sample,numOfIC,isave,save_range,FileName,savedir,save_together,use_wb,EMG_shank,HP,Shk01,EMGFileName] = ...
     DefaultArgs(varargin, {false, [], 1000, true, 2, 100, [], true,[],'hw',3,0,false,[],[],[],true,false,0,[],[],[]});
 [nt, nch] = size(x);
 if isempty(included_periods)
@@ -350,9 +350,7 @@ if isave
         FileName =  cwd((find(cwd=='/',1,'last')+1):end);
         
         LFPfile = sprintf('%s%s.lfpd',savedir,FileName);
-        if isempty(EMGfile)
-            EMGfile = sprintf('%s%s.sh%d.emg',savedir,FileName,EMG_shank);
-        end
+        EMGfile = sprintf('%s%s.sh%d.emg',savedir,FileName,EMG_shank);
         
         if exist(LFPfile,'file')
             warning(sprintf('%s already exist! Please check!\n Now saving to the %s.new files.', FileName, FileName))
@@ -384,9 +382,7 @@ if isave
         end
         
         LFPfile = sprintf('%s%s.lfpd',savedir,FileName);
-        if isempty(EMGfile)
-            EMGfile = sprintf('%s%s.sh%d.emg',savedir,FileName,EMG_shank);
-        end
+        EMGfile = sprintf('%s%s.sh%d.emg',savedir,FileName,EMG_shank);
         
         m = memmapfile(LFPfile,'Format',{'int16',save_range{2},'x'},'Writable',true);
         m.Data.x(HP, save_range{1}(1,1):save_range{1}(1,2)) = int16(x');
