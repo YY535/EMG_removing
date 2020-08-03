@@ -80,8 +80,14 @@ function varargout = EMG_rm_long(x, varargin)
 %% COMPLETE VARIABLES
 
 cwd=pwd; %
-[silence_periods, included_periods, LFPfs, rm_linenoise, line_thrd, high_pass_freq, EMG_thrd, if_rm_mean,armodel,cmp_method,down_sample,numOfIC,isave,save_range,FileName,savedir,save_together,use_wb,EMG_shank,HP,Shk01,EMGfile] = ...
-    DefaultArgs(varargin, {false, [], 1000, true, 2, 100, [], true,[],'hw',3,0,false,[],[],[],true,false,0,[],[],[]});
+[silence_periods, included_periods, LFPfs, rm_linenoise, line_thrd, ... % 1-5
+    high_pass_freq, EMG_thrd, if_rm_mean,armodel,cmp_method,down_sample,... % 6-11
+    numOfIC,isave,save_range,FileName,savedir,save_together,...% 12-17
+    use_wb,EMG_shank,HP,Shk01,EMGfile] = ... % 18 -22
+    DefaultArgs(varargin, {false, [], 1000, true, 2, ...
+    100, [], true,[],'hw',3,...
+    0,false,[],[],[],true,...
+    false,0,[],[],[]});
 [nt, nch] = size(x);
 if isempty(included_periods)
     included_periods = 1:nt;
