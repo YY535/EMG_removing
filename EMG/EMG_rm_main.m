@@ -1,5 +1,5 @@
 function EMG_rm_main(FileBase,varargin)
-% EMG_rm_main(FileBases,[savedir,denoise_shank,cleanEMGch,...
+% EMG_rm_main(FileBases,[denoise_frequency_lowerbound,savedir,denoise_shank,cleanEMGch,...
 %                        silence_periods,sp_loadingfuns,...
 %                        rm_linenoise,line_thrd, ...
 %                        numOfIC,hp_freq,nchunks, cmp_method,down_sample, ...
@@ -12,6 +12,7 @@ function EMG_rm_main(FileBase,varargin)
 % Inputs:
 %   FileBase: session name.
 %   Optional:
+%       denoise_frequency_lowerbound: keep slower signal until this frequency
 %       savedir: path to save the cleaned files.
 %       denoise_shank: the shanks for denoising. defualt: shank number 1,
 %                      use [shk_1,...,shk_n] to denoise multiple shanks
@@ -53,7 +54,7 @@ function EMG_rm_main(FileBase,varargin)
 % 
 % Last Modified: 11.12.2019.
 
-[savedir,denoise_shank,cleanEMGch,silence_periods,sp_loadingfuns,rm_linenoise,line_thrd, numOfIC, hp_freq,nchunks, cmp_method,down_sample,nFFT, Winlength, save_together,use_wb,PeriodLengthLimits] = DefaultArgs(varargin, {pwd,1,[],false,[],true,1.8,[], 100,6, 'hw',3, 2^9,[],true,false,1e6});
+[denoise_frequency_lowerbound,savedir,denoise_shank,cleanEMGch,silence_periods,sp_loadingfuns,rm_linenoise,line_thrd, numOfIC, hp_freq,nchunks, cmp_method,down_sample,nFFT, Winlength, save_together,use_wb,PeriodLengthLimits] = DefaultArgs(varargin, {0,pwd,1,[],false,[],true,1.8,[], 100,6, 'hw',3, 2^9,[],true,false,1e6});
 
 if exist([FileBase,'.lfpinterp'],'file')
     LFPfile = [FileBase,'.lfpinterp'];
@@ -167,6 +168,7 @@ Ws = cell(nPeriod,nshank);
 As = cell(nPeriod,nshank);
 EMG_au = cell(nPeriod,nshank);
 AW  = cell(nPeriod,nshank);
+flatness = cell(nPeriod,nshank);
 for n = 1:nshank
     HP = par.AnatGrps(denoise_shank(n)).Channels +1;% - par.AnatGrps(1).Channels(1);
     HPs = [HPs;HP(:)];
@@ -189,7 +191,8 @@ for n = 1:nshank
         else
             tmp_included_periods=[];
         end
-        [~, Ws{k,n}, As{k,n}, EMG_au{k,n}, AW{k,n}, armodel,scaling_factor(k,n)] = EMG_rm_long(LoadBinary(LFPfile,HP,par.nChannels,2,[],[],tmp_Period)',   ...
+        [~, Ws{k,n}, As{k,n}, EMG_au{k,n}, AW{k,n}, armodel,scaling_factor(k,n),flatness{k,n}] = EMG_rm_long(LoadBinary(LFPfile,HP,par.nChannels,2,[],[],tmp_Period)',   ...
+            denoise_frequency_lowerbound,...
             silence_periods,tmp_included_periods,...
             Fs, rm_linenoise,line_thrd,hp_freq, ...
             EMG_thrd(tmp_Period(1):tmp_Period(2)), true, ...
@@ -197,10 +200,28 @@ for n = 1:nshank
             true, save_range, FileBase, savedir, save_together,use_wb,denoise_shank(n),[],[],EMGFileName);
     end
 end
-
+par.denoise_frequency_lowerbound =denoise_frequency_lowerbound;
+par.savedir =savedir;
+par.denoise_shank =denoise_shank;
+par.cleanEMGch =cleanEMGch;
+par.silence_periods =silence_periods;
+par.sp_loadingfuns =sp_loadingfuns;
+par.rm_linenoise =rm_linenoise;
+par.line_thrd =line_thrd;
+par.numOfIC =numOfIC;
+par.hp_freq =hp_freq;
+par.nchunks =nchunks;
+par.cmp_method =cmp_method;
+par.down_sample =down_sample;
+par.nFFT =nFFT;
+par.Winlength =Winlength;
+par.save_together =save_together;
+par.use_wb =use_wb;
+par.PeriodLengthLimits =PeriodLengthLimits;
+par.PYR_Channel = 37;
 if save_together
     shank_names = sprintf('%d-',denoise_shank);
-    save(sprintf('%s/%s.EMG_rm.sh%s.mat',savedir,FileBase,shank_names(1:(end-1))), 'Ws','As','AW','EMG_au','armodel','sug_period','par','denoise_shank','LFPfile','scaling_factor')
+    save(sprintf('%s/%s.EMG_rm.sh%s.mat',savedir,FileBase,shank_names(1:(end-1))), 'Ws','As','AW','EMG_au','armodel','sug_period','par','denoise_shank','LFPfile','scaling_factor','flatness')
 end
 
 %% COMPLETE OTHER CHANNELS

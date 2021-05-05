@@ -1,5 +1,6 @@
 function varargout = EMG_rm_long(x, varargin)
 % function [x, Ws, As, EMG_au, AW, armodel] = EMG_rm_long(x,[
+%                                       denoise_frequency_lowerbound,
 %                                       silence_periods,included_periods,
 %                                       SamplingRate, 
 %                                       high_pass_freq, EMG_thrd, if_rm_mean, 
@@ -12,6 +13,7 @@ function varargout = EMG_rm_long(x, varargin)
 % Inputs: 
 %   x: data, nt x nch.
 %   Optional: 
+%       denoise_frequency_lowerbound: keep slower signal until this frequency
 %       silence_periods: whether one would like to remove noise only for
 %           non_silenced periods
 %       included_periods: the periods to be included.
@@ -80,14 +82,15 @@ function varargout = EMG_rm_long(x, varargin)
 %% COMPLETE VARIABLES
 
 cwd=pwd; %
-[silence_periods, included_periods, LFPfs, rm_linenoise, line_thrd, ... % 1-5
+[denoise_frequency_lowerbound,silence_periods, included_periods, LFPfs, rm_linenoise, line_thrd, ... % 1-5
     high_pass_freq, EMG_thrd, if_rm_mean,armodel,cmp_method,down_sample,... % 6-11
     numOfIC,isave,save_range,FileName,savedir,save_together,...% 12-17
     use_wb,EMG_shank,HP,Shk01,EMGfile] = ... % 18 -22
-    DefaultArgs(varargin, {false, [], 1000, true, 2, ...
+    DefaultArgs(varargin, {0,false, [], 1000, true, 2, ...
     100, [], true,[],'hw',3,...
     0,false,[],[],[],true,...
     false,0,[],[],[]});
+
 [nt, nch] = size(x);
 if isempty(included_periods)
     included_periods = 1:nt;
@@ -192,11 +195,14 @@ if rm_linenoise
 end
 
 %% EMG COMPONENTS AND ACTIVITIES
+flatness_threshold = 2*nch;
 if sum(selectedprd)>=(10*LFPfs)
+    remove_cmp = true;
     AW.usewb = false;
     % Components from the high frequency.
     switch lower(cmp_method) %
         case 'hw'
+            % defualt
             hx = butfilter(x,4,high_pass_freq/(LFPfs/2),'high');
             [Ah, Wh] = fastica(hx(selectedprd,:)', 'numOfIC', numOfIC,'verbose','off');
             [~,rod] = sort(abs(sum(opf_A(Ah))),'descend');
@@ -206,13 +212,16 @@ if sum(selectedprd)>=(10*LFPfs)
             
             A = Ah(:,rod)*Ax;
             W = Wx*Wh(rod,:);
-            if (sum(abs(sum(opf_A(A)))>nch)>1) || sum(abs(sum(opf_A(A)))>(2*nch))<1
+            flatness = abs(sum(opf_A(A)));
+            if (sum(abs(sum(opf_A(A)))>nch)>1) || sum(abs(sum(opf_A(A)))>flatness_threshold)<1 % 
+                remove_cmp = false;
                 fprintf('recompute...\n')
                 wx=whitensignal(wx,[],[],tmp_ar);
                 nn = 1;
-                while  ((sum(abs(sum(opf_A(A)))>nch)>1) || sum(abs(sum(opf_A(A)))>(2*nch))<1)&&(nn<5)
-                    % too many flat components.
-                    if ((sum(abs(sum(opf_A(Ah)))>nch)>1) || sum(abs(sum(opf_A(Ah)))>(2*nch))<1)
+                
+                while  ((sum(flatness>nch)>1) || sum(flatness>flatness_threshold)<1)&&(nn<5)
+                    % too many flat components or none of the components are flat enough.
+                    if ((sum(abs(sum(opf_A(Ah)))>nch)>1) || sum(abs(sum(opf_A(Ah)))>flatness_threshold)<1)
                         [Ah, Wh] = fastica(hx(selectedprd,:)','verbose','off'); % 'numOfIC', numOfIC,
                     end
                     [Ax, Wx] = fastica(Wh*wx(included_periods(nn:down_sample:end),:)','verbose','off');
@@ -220,11 +229,16 @@ if sum(selectedprd)>=(10*LFPfs)
                     W = Wx*Wh;
                     nn = nn+1;
                     fprintf('\r%d in %d...\n',nn,5)
+                    flatness = abs(sum(opf_A(A)));
+                end
+                if ((sum(abs(sum(opf_A(Ah)))>nch)<2) && sum(flatness>flatness_threshold)>0)
+                    % too many components usually indicates there's no typical EMG noise. 
+                    remove_cmp = true;
                 end
                 
                 fprintf('\n\n')
             end
-            if (sum(abs(sum(opf_A(A)))>nch)<1) && use_wb
+            if (sum(flatness>nch)<1) && use_wb
                 [Awb, Wwb] = fastica(x(included_periods(1:down_sample:end),:)', 'verbose','off');% se
                 AW.Awb = Awb;
                 AW.Wwb = Wwb;
@@ -233,91 +247,108 @@ if sum(selectedprd)>=(10*LFPfs)
                     W = Wwb;
                     AW.usewb = true;
                     fprintf('\r Using the non-whitened data.\n')
+                    remove_cmp = true;
                 end
             end
             AW.Ah = Ah;
             AW.Ax = Ax;
             AW.Wh = Wh;
             AW.Wx = Wx;
-        case 'w' % Use Whiten alone
+        case 'w' % Use Whiten alone, pretty loose
             [A, W] = fastica(wx(included_periods(1:down_sample:end),:)', 'numOfIC', numOfIC,'verbose','off');% selectedprd
-            if (sum(abs(sum(opf_A(A)))>nch)<1) && use_wb
-                [Awb, Wwb] = fastica(x(included_periods(1:down_sample:end),:)', 'verbose','off');% se
-                AW.Awb = Awb;
-                AW.Wwb = Wwb;
-                if sum(abs(sum(opf_A(Awb)))>(nch*.9))>0
-                    A = Awb;
-                    W = Wwb;
-                    AW.usewb = true;
-                    fprintf('\r Using the non-whitened data.\n')
+            flatness = abs(sum(opf_A(A)));
+            if (sum(flatness>nch)<1)
+                remove_cmp = false;
+                if use_wb
+                    [Awb, Wwb] = fastica(x(included_periods(1:down_sample:end),:)', 'verbose','off');% se
+                    AW.Awb = Awb;
+                    AW.Wwb = Wwb;
+                    if sum(abs(sum(opf_A(Awb)))>(nch*.9))>0
+                        A = Awb;
+                        W = Wwb;
+                        AW.usewb = true;
+                        fprintf('\r Using the non-whitened data.\n')
+                        remove_cmp = true;
+                    end
                 end
             end
         otherwise
             fprintf('Please using hw or w. ')
     end
     
-    [~, EMG_comp] = max(abs(sum(opf_A(A))));
+    flatness = abs(sum(opf_A(A)));
+    [~, EMG_comp] = max(flatness);
     As = A(:,EMG_comp);
     Ws = W(EMG_comp,:);
-    EMG_au = (x*Ws');%.*selectedprd;
+    if denoise_frequency_lowerbound>0
+        EMG_au = butfilter((x*Ws'),4,denoise_frequency_lowerbound/(LFPfs/2),'high');%.*selectedprd;
+    else
+        EMG_au = x*Ws';%.*selectedprd;
+    end
     % (:,n) is to see the behavior of the highpassed resulted EMG.
     % not need in the final varsion.
     
     AW.A = A;
     AW.W = W;
     
-    %% SMOOTHING THE BOUNDRIES OF SILENCED PERIODS.
-    cross_searching_ranges = 50;
-    if silence_periods
-        last_end = 1;
-        for k = 1:size(sds,1)
-            % for the starting points
-            if sds(k,1)<cross_searching_ranges
-                [~,id] = FindCrossing(abs(EMG_au(1:cross_searching_ranges)),1);
-                EMG_au(1:id) = 0;
-            else
-                tmp = (sds(k,1)-cross_searching_ranges):sds(k,1);
-                [~,id] = FindCrossing(abs(EMG_au(tmp)),-1);
-                EMG_au(last_end:tmp(id)) = 0;
+    if remove_cmp
+        %% SMOOTHING THE BOUNDRIES OF SILENCED PERIODS.
+        cross_searching_ranges = 50;
+        if silence_periods
+            last_end = 1;
+            for k = 1:size(sds,1)
+                % for the starting points
+                if sds(k,1)<cross_searching_ranges
+                    [~,id] = FindCrossing(abs(EMG_au(1:cross_searching_ranges)),1);
+                    EMG_au(1:id) = 0;
+                else
+                    tmp = (sds(k,1)-cross_searching_ranges):sds(k,1);
+                    [~,id] = FindCrossing(abs(EMG_au(tmp)),-1);
+                    EMG_au(last_end:tmp(id)) = 0;
+                end
+                % for the ends
+                if sds(k,2)<(nt-cross_searching_ranges)
+                    tmp = [0:cross_searching_ranges]+sds(k,2);
+                    [~,id] = FindCrossing(abs(EMG_au(tmp)),1);
+                    last_end = tmp(id)+1;
+                end
             end
-            % for the ends
-            if sds(k,2)<(nt-cross_searching_ranges)
-                tmp = [0:cross_searching_ranges]+sds(k,2);
-                [~,id] = FindCrossing(abs(EMG_au(tmp)),1);
-                last_end = tmp(id)+1;
+            if last_end>1
+                EMG_au(last_end:end) = 0;
             end
         end
-        if last_end>1
-            EMG_au(last_end:end) = 0;
+        %% SMOOTHING THE ENDS OF EMG TRACES.
+        
+        % first_cross
+        if abs(EMG_au(1))<(median(abs(EMG_au))*1e-3)
+            first_cross = 1;
+        else
+            first_cross = find(sign(EMG_au(1:(end-1)).*EMG_au(2:end))<0,1,'first');
         end
-    end
-    %% SMOOTHING THE ENDS OF EMG TRACES.
-    
-    % first_cross
-    if abs(EMG_au(1))<(median(abs(EMG_au))*1e-3)
-        first_cross = 1;
+        if first_cross>1250
+            first_cross = find(EMG_au<=(median(abs(EMG_au))*1e-2),1,'first');
+        end
+        EMG_au(1:first_cross)=0;
+        AW.zero_first = first_cross;% zeros line at first.
+        
+        % last_cross
+        if abs(EMG_au(end))<(median(abs(EMG_au))*1e-3)
+            last_cross = nt;
+        else
+            last_cross = find(sign(EMG_au(1:(end-1)).*EMG_au(2:end))<0,1,'last');
+        end
+        if (nt-last_cross)>1250
+            last_cross = find(EMG_au<=(median(abs(EMG_au))*1e-2),1,'last');
+        end
+        EMG_au((last_cross+1):end)=0;
+        AW.zero_last = nt - last_cross+1;% zeros line at last.
+        
+        x = x - EMG_au*As';% (:,end)
+        
     else
-        first_cross = find(sign(EMG_au(1:(end-1)).*EMG_au(2:end))<0,1,'first');
+        EMG_au = EMG_au*0;
+        fprintf('EMG_component is not removed')
     end
-    if first_cross>1250
-        first_cross = find(EMG_au<=(median(abs(EMG_au))*1e-2),1,'first');
-    end
-    EMG_au(1:first_cross)=0;
-    AW.zero_first = first_cross;% zeros line at first.
-    
-    % last_cross
-    if abs(EMG_au(end))<(median(abs(EMG_au))*1e-3)
-        last_cross = nt;
-    else
-        last_cross = find(sign(EMG_au(1:(end-1)).*EMG_au(2:end))<0,1,'last');
-    end
-    if (nt-last_cross)>1250
-        last_cross = find(EMG_au<=(median(abs(EMG_au))*1e-2),1,'last');
-    end
-    EMG_au((last_cross+1):end)=0;
-    AW.zero_last = nt - last_cross+1;% zeros line at last.
-    
-    x = x - EMG_au*As';% (:,end)
     if ~if_rm_mean
         x = bsxfun(@plus, x, mx);
     end
@@ -326,6 +357,33 @@ if sum(selectedprd)>=(10*LFPfs)
     end
 end
 %% OUTPUT OR SAVE DATA
+
+par.denoise_frequency_lowerbound = denoise_frequency_lowerbound;
+par.silence_periods =silence_periods;
+par.included_periods =included_periods;
+par.LFPfs =LFPfs;
+par.rm_linenoise =rm_linenoise;
+par.line_thrd =line_thrd;
+par.high_pass_freq =high_pass_freq;
+par.EMG_thrd =EMG_thrd;
+par.if_rm_mean=if_rm_mean;
+par.armodel=armodel;
+par.cmp_method=cmp_method;
+par.down_sample=down_sample;
+par.numOfIC=numOfIC;
+par.isave=isave;
+par.save_range=save_range;
+par.FileName=FileName;
+par.savedir=savedir;
+par.currentdir = cwd;
+par.save_together=save_together;
+par.use_wb=use_wb;
+par.EMG_shank=EMG_shank;
+par.HP=HP;
+par.Shk01=Shk01;
+par.EMGfile=EMGfile;
+par.remove_cmp = remove_cmp;
+par.flatness = flatness;
 scaling_factor = sign(sum(As))*sqrt(As'*As);
 if nargout>1
     varargout{1} = x;
@@ -335,6 +393,8 @@ if nargout>1
     varargout{5} = AW;
     varargout{6} = tmp_ar;
     varargout{7} = scaling_factor;
+    varargout{8} = flatness;
+    varargout{9} = par;
 else 
     isave = true;
 end
@@ -370,7 +430,7 @@ if isave
             G_par.Shk01=Shk01;
 %             par.lfpSampleRate=LFPfs;
             denoise_shank=EMG_shank;
-            save(sprintf('%s.EMG_rm.t%d-%d.ch%d-%d.mat',FileName,save_range(1,:),save_range(2,:)), 'AW','EMG_au','armodel','Ws','As','armodel','selectedprd','denoise_shank','LFPfile','scaling_factor','G_par')
+            save(sprintf('%s.EMG_rm.t%d-%d.ch%d-%d.mat',FileName,save_range(1,:),save_range(2,:)), 'AW','EMG_au','armodel','Ws','As','armodel','selectedprd','denoise_shank','LFPfile','scaling_factor','G_par','par','flatness')
         end
         fileID = fopen(LFPfile,'w');
         fwrite(fileID, int16(x'),'int16');
@@ -386,7 +446,7 @@ if isave
             G_par.Shk01=Shk01;
 %             par.lfpSampleRate=LFPfs;
             denoise_shank=EMG_shank;
-            save(sprintf('%s.EMG_rm.t%d-%d.ch%d-%d.mat',FileName,save_range{1}(1,:),save_range{1}(2,:)), 'AW','EMG_au','armodel','Ws','As','armodel','selectedprd','denoise_shank','LFPfile','scaling_factor','G_par')
+            save(sprintf('%s.EMG_rm.t%d-%d.ch%d-%d.mat',FileName,save_range{1}(1,:),save_range{1}(2,:)), 'AW','EMG_au','armodel','Ws','As','armodel','selectedprd','denoise_shank','LFPfile','scaling_factor','G_par','par','flatness')
         end
         
         LFPfile = sprintf('%s%s.lfpd',savedir,FileName);
