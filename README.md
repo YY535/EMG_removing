@@ -24,16 +24,17 @@ addpath(genpath('/path/to/EMG_removing'))
 cd('/path/to/the/session')
 FileBase = session_name;
 denoise_shanks = 1;
+denoise_frequency_lowerbound = 10;
 rm_line_noise = true; 
 silence_periods = false;
 sp_loadingfuns = [];% use load
-EMG_rm_main(FileBase,[],denoise_shanks,[],silence_periods,sp_loadingfuns,rm_line_noise)
+EMG_rm_main(FileBase,denoise_frequency_lowerbound,[],denoise_shanks,[],silence_periods,sp_loadingfuns,rm_line_noise)
 # Groups:
 ngroups=1;
 Grps=cell(ngroups,1);
 Grps{1}=[1,2];
 keep_old_lfpd = true;
-EMG_rm_main_group(FileBase,Grps,keep_old_lfpd,[],[],silence_periods,sp_loadingfuns,rm_line_noise)
+EMG_rm_main_group(FileBase,Grps,denoise_frequency_lowerbound,keep_old_lfpd,[],[],silence_periods,sp_loadingfuns,rm_line_noise)
 ```
 
 - Notice the function `EMG_rm_main.m` or `EMG_rm_long.m` by defualt automatically remove the line noise component. If you don't want to do this, set this parameter to `false`. Sometimes people prefer to remove noise in the awake periods and left sleeping periods unchanged. To do this you would need to give the periods you don't want to touch in `silence_periods`. In this case, if you have any function other than `load` to import the periods, specify it in `sp_loadingfuns` with the function name and remember to add that to your path. `EMG_rm_main_group.m` allows one to fit the components simultaneously for all the shanks in a group, groups is given in cell. The `keep_old_lfpd` allows one to keep the old denoing results and only work on the new groups. 
