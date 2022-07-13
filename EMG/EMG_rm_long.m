@@ -106,7 +106,8 @@ else
     istr = false;
 end
 if isempty(EMG_thrd)
-    error('Please Check the high EMG detection file.')
+    warning('Please Check the high EMG detection file.\nWe use the whole period for now. ')
+    EMG_thrd = true(nt,1);
 end
 if ~numOfIC
     numOfIC = max(fix(.7*nch), min(10,nch));
