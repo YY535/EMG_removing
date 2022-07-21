@@ -82,7 +82,11 @@ function varargout = EMG_rm_long(x, varargin)
 %% COMPLETE VARIABLES
 
 cwd=pwd; %
-% this really need to be written as an object... -o-
+if nargin>2
+    if strcmp(lower(varargin{1}),'par')
+        
+    end
+end
 [denoise_frequency_lowerbound,silence_periods, included_periods, LFPfs, rm_linenoise, line_thrd, ... % 1-6
     high_pass_freq, EMG_thrd, if_rm_mean,armodel,cmp_method,down_sample,... % 7-12
     numOfIC,isave,save_range,FileName,savedir,save_together,...% 13-18
