@@ -168,8 +168,16 @@ else
     chmap=HP;
 end
 opf_a = @(x)bsxfun(@rdivide,x,sqrt(sum(x.^2)));
-opf_Aa = @(x)(bsxfun(@rdivide,x,SREaffineV(chmap,x,Shk01)));
-opf_A = @(x)opf_Aa(opf_a(x));
+notincludeL1=true;
+if notincludeL1
+    opf_Aa = @(x)1./SREaffineV(chmap,x,Shk01,[],1);
+%     opf_A = @(x)opf_Aa(opf_a(x));
+    opf_flatness = @(x)opf_Aa(opf_a(x));
+else
+    opf_Aa = @(x)(bsxfun(@rdivide,x,SREaffineV(chmap,x,Shk01,[],1)));
+    opf_A = @(x)opf_Aa(opf_a(x))/sqrt(size(x,1));
+    opf_flatness = @(x)abs(sum(opf_A(x)));
+end
 % SREaffineV use affine to fit, and compute the variance accordinglty.
 % Accounting for the linear leaking from other areas.  
 %% REMOVE LINE-NOISE
@@ -181,7 +189,7 @@ if rm_linenoise
     AW.A_line = A_line;
     AW.W_line = W_line;
     AW.power_ratio = power_ratio;
-    AW.thrd = thrd;
+    AW.thrd = thrd; 
     if ~isempty(A_rm_line)
         signals = x*W_rm_line';
         for n = 1:size(signals,2)
@@ -197,7 +205,8 @@ if rm_linenoise
 end
 
 %% EMG COMPONENTS AND ACTIVITIES
-flatness_threshold = 2*nch;
+flatness_threshold = 1e2;% check the flatness_validation.m for a modeling of SRE singal impedence noise dependence. 
+flatness_threshold_low = 10;
 if sum(selectedprd)>=(10*LFPfs)
     remove_cmp = true;
     AW.usewb = false;
@@ -214,16 +223,16 @@ if sum(selectedprd)>=(10*LFPfs)
             
             A = Ah(:,rod)*Ax;
             W = Wx*Wh(rod,:);
-            flatness = abs(sum(opf_A(A)));
-            if (sum(abs(sum(opf_A(A)))>nch)>1) || sum(abs(sum(opf_A(A)))>flatness_threshold)<1 % 
+            flatness = opf_flatness(A);
+            if (sum(flatness>flatness_threshold_low)>1) || sum(flatness>flatness_threshold)<1 % 
                 remove_cmp = false;
                 fprintf('recompute...\n')
                 wx=whitensignal(wx,[],[],tmp_ar);
                 nn = 1;
                 
-                while  ((sum(flatness>nch)>1) || sum(flatness>flatness_threshold)<1)&&(nn<5)
+                while  ((sum(flatness>flatness_threshold_low)>1) || sum(flatness>flatness_threshold)<1)&&(nn<5)
                     % too many flat components or none of the components are flat enough.
-                    if ((sum(abs(sum(opf_A(Ah)))>nch)>1) || sum(abs(sum(opf_A(Ah)))>flatness_threshold)<1)
+                    if ((sum(opf_flatness(Ah)>flatness_threshold_low)>1) || sum(opf_flatness(Ah)>flatness_threshold)<1)
                         [Ah, Wh] = fastica(hx(selectedprd,:)','verbose','off'); % 'numOfIC', numOfIC,
                     end
                     [Ax, Wx] = fastica(Wh*wx(included_periods(nn:down_sample:end),:)','verbose','off');
@@ -231,20 +240,20 @@ if sum(selectedprd)>=(10*LFPfs)
                     W = Wx*Wh;
                     nn = nn+1;
                     fprintf('\r%d in %d...\n',nn,5)
-                    flatness = abs(sum(opf_A(A)));
+                    flatness = opf_flatness(A);
                 end
-                if ((sum(abs(sum(opf_A(Ah)))>nch)<2) && sum(flatness>flatness_threshold)>0)
+                if ((sum(opf_flatness(Ah)>flatness_threshold_low)<2) && sum(flatness>flatness_threshold)>0)
                     % too many components usually indicates there's no typical EMG noise. 
                     remove_cmp = true;
                 end
                 
                 fprintf('\n\n')
             end
-            if (sum(flatness>nch)<1) && use_wb
+            if (sum(flatness>flatness_threshold_low)<1) && use_wb
                 [Awb, Wwb] = fastica(x(included_periods(1:down_sample:end),:)', 'verbose','off');% se
                 AW.Awb = Awb;
                 AW.Wwb = Wwb;
-                if sum(abs(sum(opf_A(Awb)))>(nch*.9))>0
+                if sum(opf_flatness(Awb)>(flatness_threshold_low*.9))>0
                     A = Awb;
                     W = Wwb;
                     AW.usewb = true;
@@ -259,13 +268,13 @@ if sum(selectedprd)>=(10*LFPfs)
         case 'w' % Use Whiten alone, pretty loose
             [A, W] = fastica(wx(included_periods(1:down_sample:end),:)', 'numOfIC', numOfIC,'verbose','off');% selectedprd
             flatness = abs(sum(opf_A(A)));
-            if (sum(flatness>nch)<1)
+            if (sum(flatness>flatness_threshold_low)<1)
                 remove_cmp = false;
                 if use_wb
                     [Awb, Wwb] = fastica(x(included_periods(1:down_sample:end),:)', 'verbose','off');% se
                     AW.Awb = Awb;
                     AW.Wwb = Wwb;
-                    if sum(abs(sum(opf_A(Awb)))>(nch*.9))>0
+                    if sum(opf_flatness(Awb)>(flatness_threshold_low*.9))>0
                         A = Awb;
                         W = Wwb;
                         AW.usewb = true;
@@ -278,7 +287,7 @@ if sum(selectedprd)>=(10*LFPfs)
             fprintf('Please using hw or w. ')
     end
     
-    flatness = abs(sum(opf_A(A)));
+    flatness = opf_flatness(A);
     [~, EMG_comp] = max(flatness);
     As = A(:,EMG_comp);
     Ws = W(EMG_comp,:);
