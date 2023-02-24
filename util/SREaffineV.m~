@@ -49,5 +49,5 @@ else
 end
 varargout{1} = r;
 if nargout>1
-    varargout{2} = alpha;
+    
 end
