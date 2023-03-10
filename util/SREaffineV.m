@@ -29,6 +29,7 @@ if Shk01(1)>0
     end
 else
     % opf_x = @(x)(x'*x/(length(x)-1));
+    noise_vec = nan(nt,ny);
     for n = 1:ny
         tmp_y = y(:,n);
         for k = 1:nch
@@ -41,6 +42,7 @@ else
             end
             tmp = ((tmp_x'*tmp_x+1e-10*eye(tmp_ch))\(tmp_x'*tmp_y));
             alpha(k,n) = tmp(end);
+            noise_vec(:,ny) = tmp_y - tmp_x*tmp;
             r(k,n) = norm(tmp_y - tmp_x*tmp);
             
             % norm is optimized
@@ -50,4 +52,7 @@ end
 varargout{1} = r;
 if nargout>1
     varargout{2} = alpha;
+end
+if nargout>2
+    varargout{3} = noise_vec;
 end
