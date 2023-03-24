@@ -56,7 +56,7 @@ end
 included_periods = included_periods(:);
 
 cwd_name = pwd;
-[hp_freq, lfpSamplingRate, lwinms, nchunks, swin, isave, FileBase, PeriodLengthLimits] = DefaultArgs(varargin, {100, 1250, 20, 4, [],false, cwd_name((find(cwd_name=='/',1,'last')+1):end),1e6});
+[hp_freq, lfpSamplingRate, lwinms, nchunks, swin, isave, FileBase, PeriodLengthLimits,savedir] = DefaultArgs(varargin, {100, 1250, 20, 4, [],false, cwd_name((find(cwd_name=='/',1,'last')+1):end),1e6,[]});
 [nt,nch] = size(x);
 if nt<nch
     x = x';
@@ -168,7 +168,7 @@ if isave
     EMG_par.datetime = datetime;
     EMG_par.A = A;
     EMG_par.W = W;
-    save(sprintf('%s.EMG_Cluster.mat',FileBase), 'EMG_heavy','EMG_thrd','sug_period','EMG_par','included_periods')
+    save(sprintf('%s/%s.EMG_Cluster.mat',savedir,FileBase), 'EMG_heavy','EMG_thrd','sug_period','EMG_par','included_periods')
 end
 function Xtrain = cmp_Xtrain(cov_x)
 c_idx = find(triu(ones(size(cov_x))));

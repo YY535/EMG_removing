@@ -267,7 +267,7 @@ if sum(selectedprd)>=(10*LFPfs)
             AW.Wx = Wx;
         case 'w' % Use Whiten alone, pretty loose
             [A, W] = fastica(wx(included_periods(1:down_sample:end),:)', 'numOfIC', numOfIC,'verbose','off');% selectedprd
-            flatness = opf_flatness(A);
+            flatness = abs(sum(opf_A(A)));
             if (sum(flatness>flatness_threshold_low)<1)
                 remove_cmp = false;
                 if use_wb
