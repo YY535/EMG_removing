@@ -241,6 +241,7 @@ if sum(selectedprd)>=(10*LFPfs)
                     nn = nn+1;
                     fprintf('\r%d in %d...\n',nn,5)
                     flatness = opf_flatness(A);
+                    flatness_threshold=max(flatness_threshold-5, flatness_threshold_low);
                 end
                 if ((sum(opf_flatness(Ah)>flatness_threshold_low)<2) && sum(flatness>flatness_threshold)>0)
                     % too many components usually indicates there's no typical EMG noise. 
