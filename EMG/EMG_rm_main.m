@@ -106,7 +106,7 @@ clear mlfp
 %% CREATING .LFPD FILE
 cd(savedir)
 myData = repmat(int16(0),1,par.nChannels*Evts(end));
-FileName = [FileBase,'.lfpd'];
+FileName = [savedir,'/',FileBase,'.lfpd'];
 if ~exist(FileName,'file')
     fileID = fopen(FileName,'w');
     fwrite(fileID, myData,'int16');
@@ -253,7 +253,8 @@ clear m mflp
 fprintf('\nDone\n')
 %% CHECK RESULTS:
 PYR_Channel = 37;
-EMG_rm_report();% ([],PYR_Channel);
+report_file = sprintf('%s/%s.EMG_rm.sh%s.mat',savedir,FileBase,shank_names(1:(end-1)));
+EMG_rm_report(report_file);% ([],PYR_Channel);
 EMG_rm_viewnoise();% (PYR_Channel,[])
 if Evts(end)>1.6e7
     nFFT = 2^(32-ceil(log2(Evts(end))));

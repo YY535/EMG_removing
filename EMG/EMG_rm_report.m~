@@ -266,14 +266,12 @@ for kk = 1:nfile
                        axs(k,kn).YLim(1), axs(k,kn).YLim(2)];
             end
             tmp(:,tmp(1,:)==0&tmp(2,:)==1) = [];
-            tmp = [min(tmp(1,:)), max(tmp(2,:)),min(tmp(3,:)),max(tmp(4,:))];
+            tmp = [min(tmp(1,:)), max(tmp(2,:)),min(tmp(3,:)),max]
             linkaxes(axs(:,kn),'xy');
             erase_ticks(axs(:,kn),'last');
             axes(axs(1,kn));
             axis(tmp);
         end
-        subplot(axs(end))
-        xlabel(sprintf('%s sh%d',FileBase,tmp_sh))
         savefig(nshk,sprintf('%s/%s.sh.%d.EMG_rm_report.%s.fig',savedir,FileBase,tmp_sh,TITLE))
     end
     save(sprintf('%s/%s.EMG_rm_report.power.mat',savedir,FileBase),'AW','Power','EMG_par')
