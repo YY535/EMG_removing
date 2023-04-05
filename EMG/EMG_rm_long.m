@@ -116,6 +116,9 @@ end
 if ~isempty(savedir)
     savedir = [savedir,'/'];
 end
+% if sum(EMG_thrd)<=(10*LFPfs)
+    EMG_thrd(1:fix(nt/50/LFPfs):end)=1;% add more samples. 
+% end
 selectedprd = EMG_thrd;
 
 %% INITIALIZE the OUTPUTS
@@ -207,6 +210,8 @@ end
 %% EMG COMPONENTS AND ACTIVITIES
 flatness_threshold = .5e2;% check the flatness_validation.m for a modeling of SRE singal impedence noise dependence. 
 flatness_threshold_low = 10;
+remove_cmp = false;
+flatness=0;
 if sum(selectedprd)>=(10*LFPfs)
     remove_cmp = true;
     AW.usewb = false;

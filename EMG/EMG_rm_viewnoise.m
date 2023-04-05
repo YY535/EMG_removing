@@ -13,13 +13,14 @@ function EMG_rm_viewnoise(varargin)
 % Last Modified: 05.12.2019.
 
 %%
-[Period,useT,sfactor,savedir] = DefaultArgs(varargin, {[],true,-1,pwd});
-
-a = dir('*.EMG_rm.sh*.mat');
-FileName = a(1).name;
-load(FileName)
+[FileName,Period,useT,sfactor,savedir] = DefaultArgs(varargin, {[],[],true,-1,pwd});
+if isempty(FileName)
+    a = dir('*.EMG_rm.sh*.mat');
+    FileName = a(1).name;
+end
+load(FileName);
 FileBase = FileName(1:(find(FileName=='.',1,'first')-1));
-a = dir('*.EMG_Cluster.mat');
+a = dir([FileBase,'.EMG_Cluster.mat']);
 load(a(1).name)
 
 
@@ -87,7 +88,7 @@ for  ksh = 1:nsh
     % the cleaned signal
     s2=subplot(2,1,2);
     tmp_x = double(m.Data.x(HP,tmp))';
-    EMGc = 5+double(emg.Data.x(tmp));
+    EMGc = 5+zscore(double(emg.Data.x(tmp)))*10;
     p1 = plot(tmp_t,opf1(tmp_x/sfactor),'r');
     hold on
     p2 = plot(tmp_t,EMGc-min(HP)+1,'b');

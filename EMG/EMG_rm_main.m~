@@ -55,12 +55,12 @@ function EMG_rm_main(FileBase,varargin)
 % 
 % Last Modified: 11.12.2019.
 
-[denoise_frequency_lowerbound,savedir,denoise_shank,cleanEMGch,silence_periods,sp_loadingfuns,rm_linenoise,line_thrd, numOfIC, hp_freq,nchunks, cmp_method,down_sample,nFFT, Winlength, save_together,use_wb,PeriodLengthLimits] = DefaultArgs(varargin, {0,pwd,1,[],false,[],true,1.8,[], 100,3, 'hw',3, 2^9,[],true,false,1e6});
+[denoise_frequency_lowerbound,savedir,denoise_shank,cleanEMGch,silence_periods,sp_loadingfuns,rm_linenoise,line_thrd, numOfIC, hp_freq,nchunks, cmp_method,down_sample,nFFT, Winlength, save_together,use_wb,PeriodLengthLimits] = DefaultArgs(varargin, {0,pwd,1,[],false,[],true,1.8,[], 100,2, 'hw',3, 2^9,[],true,false,1e6});
 addpath(genpath(savedir))
 tmp_dir = pwd;
 addpath(pwd)
 armodel = [];
-use_currAR=0;
+use_currAR=0;recompute_cluster=0;
 if exist([FileBase,'.lfpinterp'],'file')
     LFPfile = [FileBase,'.lfpinterp'];
     if use_currAR
@@ -106,7 +106,7 @@ clear mlfp
 %% CREATING .LFPD FILE
 cd(savedir)
 myData = repmat(int16(0),1,par.nChannels*Evts(end));
-FileName = [FileBase,'.lfpd'];
+FileName = [savedir,'/',FileBase,'.lfpd'];
 if ~exist(FileName,'file')
     fileID = fopen(FileName,'w');
     fwrite(fileID, myData,'int16');
@@ -127,9 +127,9 @@ save_range = cell(2,1);
 save_range{2} = [par.nChannels, Evts(end)];
 
 %% DETECTING THE HIGH EMG PRIODS
-if exist([FileBase, '.EMG_Cluster.mat'], 'file')
+if exist([savedir,'/',FileBase, '.EMG_Cluster.mat'], 'file')&&~recompute_cluster
     % have already been included in the searching path exist([savedir,'/',FileBase, '.EMG_Cluster.mat'], 'file')
-    load([FileBase, '.EMG_Cluster.mat'],'EMG_thrd', 'sug_period')
+    load([savedir,'/',FileBase, '.EMG_Cluster.mat'],'EMG_thrd', 'sug_period')
     fprintf('\n\n--------------------------------------------------\n                   Please!!! \n  Remove all the previously generated files \n     when you try to redo the denoising!\n--------------------------------------------------\n\n')
     if silence_periods
         load([FileBase, '.EMG_Cluster.mat'],'included_periods')
@@ -161,10 +161,10 @@ else
         end
         silence_periods = true;% a flag
         [EMG_thrd, ~, sug_period,included_periods] = EMG_Cluster_s(lfp,included_periods,hp_freq, Fs, lwinms, nchunks,...
-            swin, true, FileBase, PeriodLengthLimits);
+            swin, true, FileBase, PeriodLengthLimits,savedir);
     else
         [EMG_thrd, ~, sug_period] = EMG_Cluster(lfp,hp_freq, Fs, lwinms, nchunks,...
-            swin, true, FileBase);
+            swin, true, FileBase,savedir);
         silence_periods = false;
         included_periods = [];
     end
@@ -182,19 +182,21 @@ As = cell(nPeriod,nshank);
 EMG_au = cell(nPeriod,nshank);
 AW  = cell(nPeriod,nshank);
 flatness = cell(nPeriod,nshank);
+scaling_factor=[];
 for n = 1:nshank
-    HP = par.AnatGrps(denoise_shank(n)).Channels +1;% - par.AnatGrps(1).Channels(1);
+    HP = par.AnatGrps(denoise_shank(n)).Channels- par.AnatGrps(1).Channels(1) +1;% 
     HPs = [HPs;HP(:)];
     
     myData = int16(zeros(1,Evts(end)));
     EMGFileName = sprintf('%s/%s.sh%d.emg',savedir,FileBase,denoise_shank(n));
     if ~exist(EMGFileName,'file')
+        cd(savedir)
         fileID = fopen(EMGFileName,'w');
         fwrite(fileID, myData,'int16');
         fclose(fileID);
         clear myData
     end
-    
+    cd(tmp_dir)
     for k = 1:nPeriod
         fprintf('\rshank%d, period%d in %d...', n, k, nPeriod)
         tmp_Period = sug_period(k,:);
@@ -204,6 +206,7 @@ for n = 1:nshank
         else
             tmp_included_periods=[];
         end
+        try
         [~, Ws{k,n}, As{k,n}, EMG_au{k,n}, AW{k,n}, armodel,scaling_factor(k,n),flatness{k,n}] = EMG_rm_long(loadbinary(LFPfile,HP,par.nChannels,2,[],[],tmp_Period)',   ...
             denoise_frequency_lowerbound,...
             silence_periods,tmp_included_periods,...
@@ -211,6 +214,8 @@ for n = 1:nshank
             EMG_thrd(tmp_Period(1):tmp_Period(2)), true, ...
             armodel, cmp_method, down_sample,numOfIC,...
             true, save_range, FileBase, savedir, save_together,use_wb,denoise_shank(n),[],[],EMGFileName);
+        catch
+        end
     end
 end
 par.denoise_frequency_lowerbound =denoise_frequency_lowerbound;
@@ -248,12 +253,14 @@ end
 clear m mflp
 fprintf('\nDone\n')
 %% CHECK RESULTS:
+
 PYR_Channel = 37;
-EMG_rm_report();% ([],PYR_Channel);
-EMG_rm_viewnoise();% (PYR_Channel,[])
-if Evts(end)>1.6e7
-    nFFT = 2^(32-ceil(log2(Evts(end))));
-    fprintf('\nNB: we are using nFFT: %d, recompute EMG_rm_viewspec() if you want.',nFFT)
-end
-EMG_rm_viewspec([],[],[],[],nFFT,Winlength);
+report_file = sprintf('%s/%s.EMG_rm.sh%s.mat',savedir,FileBase,shank_names(1:(end-1)));
+% EMG_rm_report(report_file);% ([],PYR_Channel);
+% EMG_rm_viewnoise(report_file);% (PYR_Channel,[])
+% if Evts(end)>1.6e7
+%     nFFT = 2^(32-ceil(log2(Evts(end))));
+%     fprintf('\nNB: we are using nFFT: %d, recompute EMG_rm_viewspec() if you want.',nFFT)
+% end
+% EMG_rm_viewspec([],[],[],[],nFFT,Winlength);
 % EOF

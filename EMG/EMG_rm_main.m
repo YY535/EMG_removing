@@ -60,7 +60,7 @@ addpath(genpath(savedir))
 tmp_dir = pwd;
 addpath(pwd)
 armodel = [];
-use_currAR=0;recompute_cluster=1;
+use_currAR=0;recompute_cluster=0;
 if exist([FileBase,'.lfpinterp'],'file')
     LFPfile = [FileBase,'.lfpinterp'];
     if use_currAR
@@ -127,9 +127,9 @@ save_range = cell(2,1);
 save_range{2} = [par.nChannels, Evts(end)];
 
 %% DETECTING THE HIGH EMG PRIODS
-if exist([FileBase, '.EMG_Cluster.mat'], 'file')&&~recompute_cluster
+if exist([savedir,'/',FileBase, '.EMG_Cluster.mat'], 'file')&&~recompute_cluster
     % have already been included in the searching path exist([savedir,'/',FileBase, '.EMG_Cluster.mat'], 'file')
-    load([FileBase, '.EMG_Cluster.mat'],'EMG_thrd', 'sug_period')
+    load([savedir,'/',FileBase, '.EMG_Cluster.mat'],'EMG_thrd', 'sug_period')
     fprintf('\n\n--------------------------------------------------\n                   Please!!! \n  Remove all the previously generated files \n     when you try to redo the denoising!\n--------------------------------------------------\n\n')
     if silence_periods
         load([FileBase, '.EMG_Cluster.mat'],'included_periods')
@@ -182,6 +182,7 @@ As = cell(nPeriod,nshank);
 EMG_au = cell(nPeriod,nshank);
 AW  = cell(nPeriod,nshank);
 flatness = cell(nPeriod,nshank);
+scaling_factor=[];
 for n = 1:nshank
     HP = par.AnatGrps(denoise_shank(n)).Channels- par.AnatGrps(1).Channels(1) +1;% 
     HPs = [HPs;HP(:)];
@@ -252,13 +253,14 @@ end
 clear m mflp
 fprintf('\nDone\n')
 %% CHECK RESULTS:
+
 PYR_Channel = 37;
 report_file = sprintf('%s/%s.EMG_rm.sh%s.mat',savedir,FileBase,shank_names(1:(end-1)));
 EMG_rm_report(report_file);% ([],PYR_Channel);
-EMG_rm_viewnoise();% (PYR_Channel,[])
-if Evts(end)>1.6e7
-    nFFT = 2^(32-ceil(log2(Evts(end))));
-    fprintf('\nNB: we are using nFFT: %d, recompute EMG_rm_viewspec() if you want.',nFFT)
-end
-EMG_rm_viewspec([],[],[],[],nFFT,Winlength);
+% EMG_rm_viewnoise(report_file);% (PYR_Channel,[])
+% if Evts(end)>1.6e7
+%     nFFT = 2^(32-ceil(log2(Evts(end))));
+%     fprintf('\nNB: we are using nFFT: %d, recompute EMG_rm_viewspec() if you want.',nFFT)
+% end
+% EMG_rm_viewspec([],[],[],[],nFFT,Winlength);
 % EOF
